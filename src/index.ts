@@ -1,5 +1,5 @@
 import express, { Request, Response, NextFunction } from 'express';
-import swaggerSpec  from './swagger';
+import swaggerSpec  from './swagger/swagger';
 import swaggerUi from 'swagger-ui-express';
 
 import mongoose from 'mongoose';
@@ -8,6 +8,7 @@ dotenv.config();
 import UserRoutes from './Routers/UserRouter'
 import CategoryRoutes from './Routers/CategoryRoutes'
 import ProductRoutes from './Routers/ProductRout'
+import cartRoutes from './Routers/cartRoutes'
 const app=express()
 app.use(express.json())
 
@@ -19,8 +20,9 @@ mongoose.connect(process.env.URI as string).then(()=> console.log('connected to 
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec)); 
   
   app.use('/users',UserRoutes);
-app.use('/categories',CategoryRoutes);
+app.use('/category',CategoryRoutes);
 app.use('/products',ProductRoutes)
+app.use('/cart',cartRoutes)
 
 
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

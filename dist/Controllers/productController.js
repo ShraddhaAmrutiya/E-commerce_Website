@@ -1,13 +1,28 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deleteProduct = exports.updateProduct = exports.readProduct = exports.createProduct = void 0;
+exports.getProductsByCategory = exports.deleteProduct = exports.updateProduct = exports.readProduct = exports.createProduct = void 0;
 const productModel_1 = require("../Models/productModel");
+const categoryModel_1 = require("../Models/categoryModel");
+const mongoose_1 = __importDefault(require("mongoose"));
 const createProduct = async (req, res) => {
-    const { category, title, description, price, salePrice, discount, quantity, colors, } = req.body;
-    if (!category || !title || !description || !price || !quantity || !colors || colors.length === 0) {
-        return res.status(400).json({ message: "All fields are required ." });
-    }
     try {
+        let { category, title, description, price, salePrice, discount, quantity } = req.body;
+        let colors = req.body.colors;
+        // Convert `colors` to an array if it's a string
+        if (typeof colors === "string") {
+            colors = colors.split(",").map((color) => color.trim());
+        }
+        if (!category || !title || !description || !price || !quantity || !colors || colors.length === 0) {
+            return res.status(400).json({ message: "All fields are required." });
+        }
+        // 🔥 Find category by name and get its ObjectId
+        const categoryDoc = await categoryModel_1.Category.findOne({ name: category });
+        if (!categoryDoc) {
+            return res.status(400).json({ message: `Category '${category}' not found.` });
+        }
         let finalSalePrice = salePrice !== undefined ? salePrice : price;
         let finalDiscount = discount !== undefined ? discount : 0;
         if (salePrice) {
@@ -17,10 +32,10 @@ const createProduct = async (req, res) => {
             finalSalePrice = price - price * (discount / 100);
         }
         const newProduct = new productModel_1.Product({
-            category,
+            category: categoryDoc._id, // ✅ Store ObjectId instead of string
             title,
             description,
-            image: req.file?.path,
+            image: req.file?.path, // Handle image from multer
             price,
             salePrice: finalSalePrice,
             discount: finalDiscount,
@@ -41,10 +56,14 @@ const createProduct = async (req, res) => {
 exports.createProduct = createProduct;
 const readProduct = async (req, res) => {
     try {
-        const products = await productModel_1.Product.find().populate("category", "name");
+        // Fetch products with category populated
+        const products = await productModel_1.Product.find()
+            .populate("category", "name")
+            .lean(); // Convert Mongoose docs to plain objects
         const groupedByCategory = {};
         for (const product of products) {
-            const categoryName = typeof product.category === 'string' ? "Uncategorized" : product.category.name;
+            // Ensure category is populated before accessing `name`
+            const categoryName = product.category && "name" in product.category ? product.category.name : "Uncategorized";
             if (!groupedByCategory[categoryName]) {
                 groupedByCategory[categoryName] = [];
             }
@@ -59,33 +78,55 @@ const readProduct = async (req, res) => {
                 colors: product.colors,
             });
         }
-        const response = [];
-        for (const category in groupedByCategory) {
-            response.push({
-                category,
-                products: groupedByCategory[category],
-            });
-        }
         return res.json({
             message: "List of products grouped by category",
-            categories: response,
+            categories: Object.entries(groupedByCategory).map(([category, products]) => ({
+                category,
+                products,
+            })),
         });
     }
     catch (error) {
-        return res.status(500).json({ message: "Error fetching products", error });
+        console.error("Error in readProduct:", error);
+        return res.status(500).json({ message: "Error fetching products", error: error.message });
     }
 };
 exports.readProduct = readProduct;
+const getProductsByCategory = async (req, res) => {
+    try {
+        const { categoryName } = req.params;
+        // 🔍 Find category by name
+        const category = await categoryModel_1.Category.findOne({ name: categoryName });
+        if (!category) {
+            return res.status(404).json({ message: `Category '${categoryName}' not found.` });
+        }
+        // 📦 Fetch products belonging to the found category
+        const products = await productModel_1.Product.find({ category: category._id });
+        return res.status(200).json({
+            message: `Products in category: ${categoryName}`,
+            products,
+        });
+    }
+    catch (error) {
+        console.error("Error fetching products by category:", error);
+        return res.status(500).json({ error: error.message });
+    }
+};
+exports.getProductsByCategory = getProductsByCategory;
 const updateProduct = async (req, res) => {
     const { id } = req.params;
-    const { category, title, description, price, salePrice, discount, quantity, colors, } = req.body;
+    const { category, title, description, price, salePrice, discount, quantity, colors } = req.body;
     try {
         const product = await productModel_1.Product.findById(id);
         if (!product) {
             return res.status(404).json({ message: "Product not found." });
         }
-        if (category !== undefined)
-            product.category = category;
+        if (category !== undefined) {
+            if (!mongoose_1.default.Types.ObjectId.isValid(category)) {
+                return res.status(400).json({ message: "Invalid category ID." });
+            }
+            product.category = new mongoose_1.default.Types.ObjectId(category); // ✅ Fix here!
+        }
         if (title !== undefined)
             product.title = title;
         if (description !== undefined)

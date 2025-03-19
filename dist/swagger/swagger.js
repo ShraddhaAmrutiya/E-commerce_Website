@@ -1,0 +1,48 @@
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const swagger_jsdoc_1 = __importDefault(require("swagger-jsdoc"));
+const cartswagger_1 = require("./cartswagger");
+const productSwagger_1 = require("./productSwagger");
+const authSwagger_1 = require("./authSwagger");
+const categorySwagger_1 = require("./categorySwagger");
+const swaggerDefinition = {
+    openapi: '3.0.0',
+    info: {
+        title: 'Ecommerce Website',
+        version: '1.0.0',
+    },
+    components: {
+        securitySchemes: {
+            bearerAuth: {
+                type: 'http',
+                scheme: 'bearer',
+                bearerFormat: 'JWT',
+            },
+        },
+    },
+    security: [
+        {
+            bearerAuth: [],
+        },
+    ],
+    paths: {
+        ...authSwagger_1.userSwagger,
+        ...cartswagger_1.cartSwagger.paths,
+        ...categorySwagger_1.categorySwagger,
+        ...productSwagger_1.productSwagger,
+    },
+};
+const options = {
+    swaggerDefinition,
+    apis: [
+        './dist/Routers/UserRouter.js',
+        './dist/Routers/CategoryRoutes.js',
+        './dist/Routers/ProductRout.js',
+        './dist/Routers/cartRoutes.js'
+    ],
+};
+const swaggerSpec = (0, swagger_jsdoc_1.default)(options);
+exports.default = swaggerSpec;

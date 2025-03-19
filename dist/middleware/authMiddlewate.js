@@ -1,4 +1,7 @@
 "use strict";
+// import { Request, Response, NextFunction } from 'express';
+// import jwt from 'jsonwebtoken';
+// import { User } from '../Models/userModel'; 
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -16,11 +19,15 @@ const authMiddleware = async (req, res, next) => {
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
+        // Check if tokenVersion in token matches the latest version in DB
+        if (user.tokenVersion !== decoded.tokenVersion) {
+            return res.status(401).json({ message: "Invalid token. Please log in again." });
+        }
         req.user = { id: user._id.toString(), Role: user.Role };
         next();
     }
     catch (error) {
-        res.status(403).json({ message: "token verification error", error });
+        res.status(403).json({ message: "Token verification error", error });
     }
 };
 exports.default = authMiddleware;

@@ -1,39 +1,22 @@
 import mongoose, { Schema, model, Document, Model } from "mongoose";
 import bcrypt from "bcryptjs";
 
-interface IUser extends Document {
-  _id: string;
+interface IUser extends mongoose.Document {
   userName: string;
   email: string;
+  Role:string
   password: string;
-  Role: "admin" | "user";
-  matchPassword(password: string): Promise<boolean>;
-  resetToken?: string,
+  resetToken?: string;
+  tokenVersion: number; // Add this field to track token invalidation
 }
 
-const UserSchema: Schema<IUser> = new Schema({
-  userName: {
-    type: String,
-    required: [true, "userName is required"],
-    unique: true,
-    match: [/^[a-zA-Z._\s0-9-]{3,20}$/, "Please enter a valid user name."],
-  },
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    match: [
-      /^[a-z0-9]+(?:\.[a-z0-9]+)*@[a-z0-9-]+\.(?:com|in|biz)$/,
-      "Enter valid",
-    ],
-  },
-  password: {
-    type: String,
-    required: true,
-    minlength: [8, "password must be 8 cherecter long."],
-  },
-  Role: { type: String, enum: ["admin", "user"], default: "user" },
-  resetToken: String,
+const UserSchema = new mongoose.Schema<IUser>({
+  userName: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  Role: { type: String, required: true,  },
+  password: { type: String, required: true },
+  resetToken: { type: String },
+  tokenVersion: { type: Number, default: 0 } // Default value is 0
 });
 
 UserSchema.pre("save", async function (next) {

@@ -1,7 +1,7 @@
-import mongoose, { Schema, Document, model } from "mongoose";
+import mongoose, { Schema, Document, model,Types } from "mongoose";
 
 interface IProduct extends Document {
-  category: string;
+  category:Types.ObjectId;
   title: string;
   description: string;
   image: string;
@@ -18,7 +18,7 @@ interface IProduct extends Document {
 const ProductSchema: Schema<IProduct> = new Schema(
   {
     category: {
-      type: String,
+      type: Schema.Types.ObjectId,
       ref: "Category",
       required: true,
     },
@@ -70,12 +70,16 @@ const ProductSchema: Schema<IProduct> = new Schema(
       type: [String],
       required: true,
       validate: {
-        validator: function (v: string[]) {
-          return v.every((color) => /^[a-zA-Z]{3,30}$/.test(color)); 
+        validator: function (v: any) {
+          if (typeof v === "string") {
+            v = v.split(",").map((color) => color.trim());
+          }
+          return Array.isArray(v) && v.every((color) => /^[a-zA-Z\s]{3,30}$/.test(color));
         },
-        message: "Each color name must be 3 to 30 letters long.",
+        message: "Each color must be 3 to 30 letters long and contain only letters or spaces.",
       },
     },
+    
   },
   { timestamps: true }
 );
