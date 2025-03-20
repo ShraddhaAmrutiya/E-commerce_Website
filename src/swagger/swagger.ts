@@ -3,6 +3,7 @@ import {cartSwagger} from "./cartswagger"
 import {productSwagger} from "./productSwagger"
 import {userSwagger} from "./authSwagger"
 import {categorySwagger} from "./categorySwagger"
+import {orderSwagger} from "./orderSwagger"
 
 const swaggerDefinition = {
   openapi: '3.0.0',
@@ -31,6 +32,7 @@ const swaggerDefinition = {
     ...cartSwagger.paths,
     ...categorySwagger,
     ...productSwagger,
+    ...orderSwagger.paths,
   },
 };
 
@@ -40,7 +42,8 @@ const options = {
     './dist/Routers/UserRouter.js',
     './dist/Routers/CategoryRoutes.js',
     './dist/Routers/ProductRout.js',
-    './dist/Routers/cartRoutes.js'
+    './dist/Routers/cartRoutes.js',
+    './dist/Routers/OrderController.js'
   ],
 };
 

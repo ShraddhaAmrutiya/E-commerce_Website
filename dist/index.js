@@ -13,6 +13,7 @@ const UserRouter_1 = __importDefault(require("./Routers/UserRouter"));
 const CategoryRoutes_1 = __importDefault(require("./Routers/CategoryRoutes"));
 const ProductRout_1 = __importDefault(require("./Routers/ProductRout"));
 const cartRoutes_1 = __importDefault(require("./Routers/cartRoutes"));
+const orderRoutes_1 = __importDefault(require("./Routers/orderRoutes"));
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
 mongoose_1.default.connect(process.env.URI).then(() => console.log('connected to mongodb.')).catch((error) => console.error(error));
@@ -21,6 +22,7 @@ app.use('/users', UserRouter_1.default);
 app.use('/category', CategoryRoutes_1.default);
 app.use('/products', ProductRout_1.default);
 app.use('/cart', cartRoutes_1.default);
+app.use('/order', orderRoutes_1.default);
 app.use((err, req, res, next) => {
     console.log(err);
     res.status(500).json({ error: 'Something went wrong!' });

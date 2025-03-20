@@ -9,6 +9,8 @@ import UserRoutes from './Routers/UserRouter'
 import CategoryRoutes from './Routers/CategoryRoutes'
 import ProductRoutes from './Routers/ProductRout'
 import cartRoutes from './Routers/cartRoutes'
+import orderRoute from './Routers/orderRoutes'
+
 const app=express()
 app.use(express.json())
 
@@ -23,6 +25,8 @@ mongoose.connect(process.env.URI as string).then(()=> console.log('connected to 
 app.use('/category',CategoryRoutes);
 app.use('/products',ProductRoutes)
 app.use('/cart',cartRoutes)
+app.use('/order',orderRoute)
+
 
 
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

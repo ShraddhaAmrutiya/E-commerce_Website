@@ -72,6 +72,44 @@ const registerUser = async (
   
 
 
+// const loginUser = async (req: Request, res: Response): Promise<Response> => {
+//   const { userName, password } = req.body;
+
+//   if (!userName || !password) {
+//     return res.status(400).json({ message: "Fill the required fields." });
+//   }
+
+//   try {
+//     const user = await User.findOne({ userName });
+//     if (!user) return res.status(401).json({ message: "Invalid credentials" });
+
+//     // Compare password with the stored hashed password
+//     const isMatch = await bcrypt.compare(password, user.password);
+//     if (!isMatch) {
+//       return res.status(401).json({ message: "Invalid credentials" });
+//     }
+
+//     if (!SECRET_KEY) {
+//       return res.status(500).json({
+//         message: "JWT secrets are not defined in the environment variables.",
+//       });
+//     }
+
+//     const accessToken = jwt.sign(
+//       { id: user._id, tokenVersion: user.tokenVersion },
+//       SECRET_KEY,
+//       { expiresIn: "1h" }
+//     );
+
+//     return res.status(200).json({
+//       message: "User logged in successfully.",
+//       accessToken,
+//     });
+//   } catch (error) {
+//     return res.status(500).json({ error: (error as Error).message });
+//   }
+// };
+
 const loginUser = async (req: Request, res: Response): Promise<Response> => {
   const { userName, password } = req.body;
 
@@ -81,10 +119,13 @@ const loginUser = async (req: Request, res: Response): Promise<Response> => {
 
   try {
     const user = await User.findOne({ userName });
-    if (!user) return res.status(401).json({ message: "Invalid credentials" });
+    if (!user) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
 
-    // Compare password with the stored hashed password
+
     const isMatch = await bcrypt.compare(password, user.password);
+
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
@@ -109,6 +150,7 @@ const loginUser = async (req: Request, res: Response): Promise<Response> => {
     return res.status(500).json({ error: (error as Error).message });
   }
 };
+
 
  const forgotPassword = async (req: Request, res: Response) => {
     const { email } = req.body;
@@ -146,42 +188,49 @@ const loginUser = async (req: Request, res: Response): Promise<Response> => {
   };
 
 
-  // const resetPasswordWithOldPassword = async (req: Request, res: Response) => {
-  //   const { oldPassword, newPassword, userName } = req.body;
-  
-  //   if (!oldPassword || !newPassword || !userName) {
-  //     return res.status(400).json({ message: "Old password, new password, and username are required." });
-  //   }
-  
-  //   try {
-  //     // Find the user by username
-  //     const user = await User.findOne({ userName });
-  //     if (!user) {
-  //       return res.status(404).json({ message: "User not found." });
-  //     }
-  
-  //     // Compare the old password with the stored hashed password
-  //     const isMatch = await bcrypt.compare(oldPassword, user.password);
-  //     if (!isMatch) {
-  //       return res.status(401).json({ message: "Old password is incorrect." });
-  //     }
-  
-  //     // Hash the new password before saving
-  //     const hashedNewPassword = await bcrypt.hash(newPassword, 10);
-  
-  //     // Update the password in the database
-  //     user.password = hashedNewPassword;
-  //     user.tokenVersion += 1; // Optionally, increment the tokenVersion to invalidate old tokens
-  //     await user.save();
-  
-  //     return res.status(200).json({ message: "Password updated successfully." });
-  //   } catch (error) {
-  //     return res.status(500).json({ message: "Server error", error: (error as Error).message });
-  //   }
-  // };
-  
+  const resetPasswordWithOldPassword = async (req: Request, res: Response) => {
+    const { userName, oldPassword, newPassword } = req.body;
 
+    if (!userName || !oldPassword || !newPassword) {
+        return res.status(400).json({ message: "All fields are required." });
+    }
 
+    try {
+        const user = await User.findOne({ userName });
+
+        if (!user) {
+            return res.status(404).json({ message: "User not found." });
+        }
+
+        const isMatch = await bcrypt.compare(oldPassword, user.password);
+
+        if (!isMatch) {
+            return res.status(401).json({ message: "Incorrect old password." });
+        }
+
+        //  Hash the new password
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+
+        //  Update the user password
+        user.password = hashedPassword;
+
+        // Ensure tokenVersion exists before incrementing
+        if (typeof user.tokenVersion === "number") {
+            user.tokenVersion += 1;
+        } else {
+            user.tokenVersion = 1; // Initialize if undefined
+        }
+
+        await user.save();
+
+        return res.status(200).json({ message: "Password updated successfully." });
+    } catch (error) {
+        return res.status(500).json({ message: "Server error", error: (error as Error).message });
+    }
+};
+
+  
 const resetPassword = async (req: Request, res: Response) => {
   const { resetToken, newPassword } = req.body;
 
@@ -238,5 +287,5 @@ const getAllUsers = async (req: Request, res: Response) => {
 };
 
 export { registerUser, loginUser,forgotPassword,resetPassword ,logoutUser,getUser,getAllUsers,
-  // resetPasswordWithOldPassword
+  resetPasswordWithOldPassword
 };

@@ -8,6 +8,7 @@ const cartswagger_1 = require("./cartswagger");
 const productSwagger_1 = require("./productSwagger");
 const authSwagger_1 = require("./authSwagger");
 const categorySwagger_1 = require("./categorySwagger");
+const orderSwagger_1 = require("./orderSwagger");
 const swaggerDefinition = {
     openapi: '3.0.0',
     info: {
@@ -33,6 +34,7 @@ const swaggerDefinition = {
         ...cartswagger_1.cartSwagger.paths,
         ...categorySwagger_1.categorySwagger,
         ...productSwagger_1.productSwagger,
+        ...orderSwagger_1.orderSwagger.paths,
     },
 };
 const options = {
@@ -41,7 +43,8 @@ const options = {
         './dist/Routers/UserRouter.js',
         './dist/Routers/CategoryRoutes.js',
         './dist/Routers/ProductRout.js',
-        './dist/Routers/cartRoutes.js'
+        './dist/Routers/cartRoutes.js',
+        './dist/Routers/OrderController.js'
     ],
 };
 const swaggerSpec = (0, swagger_jsdoc_1.default)(options);
