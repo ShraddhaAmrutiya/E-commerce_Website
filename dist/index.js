@@ -6,6 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const swagger_1 = __importDefault(require("./swagger/swagger"));
 const swagger_ui_express_1 = __importDefault(require("swagger-ui-express"));
+const express_basic_auth_1 = __importDefault(require("express-basic-auth"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
@@ -17,7 +18,12 @@ const orderRoutes_1 = __importDefault(require("./Routers/orderRoutes"));
 const app = (0, express_1.default)();
 app.use(express_1.default.json());
 mongoose_1.default.connect(process.env.URI).then(() => console.log('connected to mongodb.')).catch((error) => console.error(error));
-app.use('/api-docs', swagger_ui_express_1.default.serve, swagger_ui_express_1.default.setup(swagger_1.default));
+const swaggerAuth = (0, express_basic_auth_1.default)({
+    users: { [process.env.SWAGGER_USER]: process.env.SWAGGER_PASS },
+    challenge: true,
+});
+// ✅ Serve Swagger Docs with Authentication
+app.use("/api-docs", swaggerAuth, swagger_ui_express_1.default.serve, swagger_ui_express_1.default.setup(swagger_1.default));
 app.use('/users', UserRouter_1.default);
 app.use('/category', CategoryRoutes_1.default);
 app.use('/products', ProductRout_1.default);

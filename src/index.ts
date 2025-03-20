@@ -1,6 +1,8 @@
 import express, { Request, Response, NextFunction } from 'express';
 import swaggerSpec  from './swagger/swagger';
 import swaggerUi from 'swagger-ui-express';
+import basicAuth from 'express-basic-auth';
+
 
 import mongoose from 'mongoose';
 import dotenv from 'dotenv';
@@ -19,8 +21,15 @@ mongoose.connect(process.env.URI as string).then(()=> console.log('connected to 
 )
 
 
-  app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec)); 
-  
+const swaggerAuth = basicAuth({
+  users: { [process.env.SWAGGER_USER] : process.env.SWAGGER_PASS },
+  challenge: true,
+}); 
+
+
+// ✅ Serve Swagger Docs with Authentication
+app.use("/api-docs", swaggerAuth, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
   app.use('/users',UserRoutes);
 app.use('/category',CategoryRoutes);
 app.use('/products',ProductRoutes)
