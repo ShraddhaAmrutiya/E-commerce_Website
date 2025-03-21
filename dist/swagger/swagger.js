@@ -9,6 +9,7 @@ const productSwagger_1 = require("./productSwagger");
 const authSwagger_1 = require("./authSwagger");
 const categorySwagger_1 = require("./categorySwagger");
 const orderSwagger_1 = require("./orderSwagger");
+const chatboatswagger_1 = require("./chatboatswagger");
 const swaggerDefinition = {
     openapi: '3.0.0',
     info: {
@@ -35,6 +36,7 @@ const swaggerDefinition = {
         ...categorySwagger_1.categorySwagger,
         ...productSwagger_1.productSwagger,
         ...orderSwagger_1.orderSwagger.paths,
+        ...chatboatswagger_1.ChatboatSwagger.paths
     },
 };
 const options = {

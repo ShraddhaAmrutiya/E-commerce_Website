@@ -4,6 +4,7 @@ import {productSwagger} from "./productSwagger"
 import {userSwagger} from "./authSwagger"
 import {categorySwagger} from "./categorySwagger"
 import {orderSwagger} from "./orderSwagger"
+import {ChatboatSwagger} from "./chatboatswagger"
 
 const swaggerDefinition = {
   openapi: '3.0.0',
@@ -33,6 +34,7 @@ const swaggerDefinition = {
     ...categorySwagger,
     ...productSwagger,
     ...orderSwagger.paths,
+    ...ChatboatSwagger.paths
   },
 };
 
