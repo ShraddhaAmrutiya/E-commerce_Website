@@ -21,7 +21,7 @@ const placeOrderFromCart = async (req, res) => {
             totalPrice += product.price * item.quantity;
             return {
                 productId: product._id,
-                quantity: item.quantity,
+                stock: item.quantity,
             };
         });
         const newOrder = new orderModel_1.default({
@@ -34,7 +34,7 @@ const placeOrderFromCart = async (req, res) => {
         for (const item of cart.products) {
             const product = item.productId;
             await productModel_1.Product.findByIdAndUpdate(product._id, {
-                $inc: { quantity: -item.quantity },
+                $inc: { stock: -item.quantity },
             });
         }
         await cartModel_1.default.findOneAndDelete({ userId });
@@ -48,24 +48,24 @@ exports.placeOrderFromCart = placeOrderFromCart;
 // Place Direct Order (Without Adding to Cart)
 const placeDirectOrder = async (req, res) => {
     try {
-        const { userId, productId, quantity } = req.body;
+        const { userId, productId, stock } = req.body;
         const product = await productModel_1.Product.findById(productId);
         if (!product) {
             return res.status(404).json({ message: "Product not found" });
         }
-        if (product.quantity < quantity) {
+        if (product.stock < stock) {
             return res.status(400).json({ message: "Insufficient stock" });
         }
-        const totalPrice = product.price * quantity;
+        const totalPrice = product.price * stock;
         const newOrder = new orderModel_1.default({
             userId: new mongoose_1.default.Types.ObjectId(userId),
-            products: [{ productId: new mongoose_1.default.Types.ObjectId(productId), quantity }],
+            products: [{ productId: new mongoose_1.default.Types.ObjectId(productId), stock }],
             totalPrice,
             status: "Pending",
         });
         await newOrder.save();
         await productModel_1.Product.findByIdAndUpdate(productId, {
-            $inc: { quantity: -quantity },
+            $inc: { stock: -stock },
         });
         return res.status(201).json({ message: "Direct order placed successfully", order: newOrder });
     }

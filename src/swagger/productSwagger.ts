@@ -16,17 +16,13 @@ export const productSwagger = {
                 description: { type: "string", example: "Latest model with AI features" },
                 price: { type: "number", example: 999.99 },
                 salePrice: { type: "number", example: 899.99 },
-                discount: { type: "number", example: 10 },
-                quantity: { type: "integer", example: 50 },
-                colors: {
-                  type: "array",
-                  items: { type: "string" },
-                  collectionFormat: "multi",
-                  example: ["Black", "Blue", "Red"],
-                },
+                discountPercentage: { type: "number", example: 10 },
+                stock: { type: "integer", example: 50 },
+                brand: { type: "string", example: "Apple" },
+                rating: { type: "number", example: 4.5 },
                 image: { type: "string", format: "binary" },
               },
-              required: ["category", "title", "description", "price", "quantity", "colors"],
+              required: ["category", "title", "price"],
             },
           },
         },
@@ -38,7 +34,7 @@ export const productSwagger = {
       },
     },
   },
-  "/products": {
+  "/products/all": {
     get: {
       summary: "Get all products",
       tags: ["Products"],
@@ -74,15 +70,11 @@ export const productSwagger = {
                 description: { type: "string", example: "Updated model" },
                 price: { type: "number", example: 999.99 },
                 salePrice: { type: "number", example: 899.99 },
-                discount: { type: "number", example: 10 },
-                quantity: { type: "integer", example: 50 },
-                colors: {
-                  type: "array",
-                  items: { type: "string" },
-                  collectionFormat: "multi",
-                  example: ["Black", "Blue"],
-                },
-                image: { type: "string", format: "binary" }, // Allows image upload
+                discountPercentage: { type: "number", example: 10 },
+                stock: { type: "integer", example: 50 },
+                brand: { type: "string", example: "Samsung" },
+                rating: { type: "number", example: 4.2 },
+                image: { type: "string", format: "binary" },
               },
             },
           },
@@ -95,7 +87,7 @@ export const productSwagger = {
       },
     },
   },
-  "/products/{id}": {
+  "/products/delete/{id}": {
     delete: {
       summary: "Delete a product",
       tags: ["Products"],
@@ -149,13 +141,10 @@ export const productSwagger = {
                         description: { type: "string", example: "Latest AI-powered smartphone" },
                         price: { type: "number", example: 999.99 },
                         salePrice: { type: "number", example: 899.99 },
-                        discount: { type: "number", example: 10 },
-                        quantity: { type: "integer", example: 50 },
-                        colors: {
-                          type: "array",
-                          items: { type: "string" },
-                          example: ["Black", "Blue", "Red"],
-                        },
+                        discountPercentage: { type: "number", example: 10 },
+                        stock: { type: "integer", example: 50 },
+                        brand: { type: "string", example: "Google" },
+                        rating: { type: "number", example: 4.7 },
                       },
                     },
                   },
@@ -169,4 +158,24 @@ export const productSwagger = {
       },
     },
   },
-};
+  "/products/{_id}": {
+    get: {
+      summary: "get a product",
+      tags: ["Products"],
+      security: [{ bearerAuth: [] }],
+      parameters: [
+        {
+          name: "_id",
+          in: "path",
+          required: true,
+          schema: { type: "string" },
+        },
+      ],
+      responses: {
+        200: { description: "Product fatched successfully" },
+        404: { description: "Product not found" },
+        500: { description: "Server error" },
+      },
+    },
+  },
+}

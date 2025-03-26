@@ -40,7 +40,7 @@ export const getCart = async (req: Request, res: Response) => {
         const productIndex = cart.products.findIndex((p) => p.productId.equals(productObjectId));
 
         if (productIndex >= 0) {
-            // 🔹 Update quantity if product exists
+            // 🔹 Update stock if product exists
             cart.products[productIndex].quantity = quantity;
         } else {
             // 🔹 Add product if it doesn't exist in cart

@@ -1,5 +1,6 @@
 import express, { Request, Response, NextFunction } from "express";
 import path from "path";
+import cors  from "cors";
 import swaggerSpec from "./swagger/swagger";
 import swaggerUi from "swagger-ui-express";
 import basicAuth from "express-basic-auth";
@@ -18,13 +19,17 @@ import chatbot from './Routers/chatboatRout'
 dotenv.config();
 
 const app = express();
+app.use(cors({ origin: "http://localhost:5173" }));
+
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: "*", methods: ["GET", "POST"] },
+  cors: { origin: "http://localhost:5173", methods: ["GET","HEAD","PUT","PATCH","POST","DELETE"],credentials: true,  },
 });
 
+const uploadPath = path.join(process.cwd(), "uploads");
+console.log("Serving uploads from:", uploadPath);
+app.use("/uploads", express.static(uploadPath));
 app.use(express.json());
-
 // MongoDB Connection
 mongoose.connect(process.env.URI as string)
   .then(() => console.log("Connected to MongoDB"))
@@ -79,6 +84,11 @@ io.on("connection", (socket) => {
     delete users[socket.id]; // Remove user from list
   });
 });
+app.use('/uploads', (req, res, next) => {
+  console.log("Serving:", req.path);
+  next();
+}, express.static('uploads'));
+
 
 app.use('/users',UserRoutes);
 app.use('/category',CategoryRoutes);

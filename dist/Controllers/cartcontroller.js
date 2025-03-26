@@ -35,7 +35,7 @@ const updateCart = async (req, res) => {
         const productObjectId = new mongoose_1.default.Types.ObjectId(productId);
         const productIndex = cart.products.findIndex((p) => p.productId.equals(productObjectId));
         if (productIndex >= 0) {
-            // 🔹 Update quantity if product exists
+            // 🔹 Update stock if product exists
             cart.products[productIndex].quantity = quantity;
         }
         else {

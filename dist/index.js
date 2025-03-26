@@ -5,6 +5,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const express_1 = __importDefault(require("express"));
 const path_1 = __importDefault(require("path"));
+const cors_1 = __importDefault(require("cors"));
 const swagger_1 = __importDefault(require("./swagger/swagger"));
 const swagger_ui_express_1 = __importDefault(require("swagger-ui-express"));
 const express_basic_auth_1 = __importDefault(require("express-basic-auth"));
@@ -20,10 +21,14 @@ const orderRoutes_1 = __importDefault(require("./Routers/orderRoutes"));
 const chatboatRout_1 = __importDefault(require("./Routers/chatboatRout"));
 dotenv_1.default.config();
 const app = (0, express_1.default)();
+app.use((0, cors_1.default)({ origin: "http://localhost:5173" }));
 const server = http_1.default.createServer(app);
 const io = new socket_io_1.Server(server, {
-    cors: { origin: "*", methods: ["GET", "POST"] },
+    cors: { origin: "http://localhost:5173", methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"], credentials: true, },
 });
+const uploadPath = path_1.default.join(process.cwd(), "uploads");
+console.log("Serving uploads from:", uploadPath);
+app.use("/uploads", express_1.default.static(uploadPath));
 app.use(express_1.default.json());
 // MongoDB Connection
 mongoose_1.default.connect(process.env.URI)
@@ -67,6 +72,10 @@ io.on("connection", (socket) => {
         delete users[socket.id]; // Remove user from list
     });
 });
+app.use('/uploads', (req, res, next) => {
+    console.log("Serving:", req.path);
+    next();
+}, express_1.default.static('uploads'));
 app.use('/users', UserRouter_1.default);
 app.use('/category', CategoryRoutes_1.default);
 app.use('/products', ProductRout_1.default);

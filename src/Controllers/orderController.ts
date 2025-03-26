@@ -19,7 +19,7 @@ export const placeOrderFromCart = async (req: Request, res: Response) => {
       totalPrice += product.price * item.quantity;
       return {
         productId: product._id,
-        quantity: item.quantity,
+        stock: item.quantity,
       };
     });
 
@@ -35,7 +35,7 @@ export const placeOrderFromCart = async (req: Request, res: Response) => {
     for (const item of cart.products) {
       const product = item.productId as any;
       await Product.findByIdAndUpdate(product._id, {
-        $inc: { quantity: -item.quantity },
+        $inc: { stock: -item.quantity },
       });
     }
 
@@ -50,22 +50,22 @@ export const placeOrderFromCart = async (req: Request, res: Response) => {
 // Place Direct Order (Without Adding to Cart)
 export const placeDirectOrder = async (req: Request, res: Response) => {
   try {
-    const { userId, productId, quantity } = req.body;
+    const { userId, productId, stock } = req.body;
 
     const product = await Product.findById(productId);
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    if (product.quantity < quantity) {
+    if (product.stock < stock) {
       return res.status(400).json({ message: "Insufficient stock" });
     }
 
-    const totalPrice = product.price * quantity;
+    const totalPrice = product.price * stock;
 
     const newOrder = new Order({
       userId: new mongoose.Types.ObjectId(userId),
-      products: [{ productId: new mongoose.Types.ObjectId(productId), quantity }],
+      products: [{ productId: new mongoose.Types.ObjectId(productId), stock }],
       totalPrice,
       status: "Pending",
     });
@@ -73,7 +73,7 @@ export const placeDirectOrder = async (req: Request, res: Response) => {
     await newOrder.save();
 
     await Product.findByIdAndUpdate(productId, {
-      $inc: { quantity: -quantity },
+      $inc: { stock: -stock },
     });
 
     return res.status(201).json({ message: "Direct order placed successfully", order: newOrder });

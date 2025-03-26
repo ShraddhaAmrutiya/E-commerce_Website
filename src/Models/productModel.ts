@@ -1,26 +1,24 @@
-import mongoose, { Schema, Document, model,Types } from "mongoose";
+import mongoose, { Schema, Document, model } from "mongoose";
 
 export interface IProduct extends Document {
-  category:Types.ObjectId;
+  _id: mongoose.Types.ObjectId;
   title: string;
-  description: string;
-  image: string;
+  image?: string;
   price: number;
+  rating: number;
+  description?: string;
   salePrice?: number;
-  discount?: number;
-  quantity: number[];
-  colors: string[];
+  category:  mongoose.Types.ObjectId | { _id: string; name: string };
+  brand?: string;
+  stock?: number;
+  discountPercentage?: number;
 }
-
-
-
 
 const ProductSchema: Schema<IProduct> = new Schema(
   {
-    category: {
+    _id: {
       type: Schema.Types.ObjectId,
-      ref: "Category",
-      required: true,
+      auto: true, // Automatically generates an _id
     },
     title: {
       type: String,
@@ -29,18 +27,14 @@ const ProductSchema: Schema<IProduct> = new Schema(
     },
     description: {
       type: String,
-      required: true,
       match: [
         /^[a-zA-Z0-9\s.,'-]{1,1000}$/,
         "Please enter a valid description.",
       ],
     },
-    image: { 
+    image: {
       type: String,
-      match: [
-        /\.(jpg|jpeg|png)$/i,
-        "Image must be a .jpg, .jpeg, or .png file.",
-      ],
+      match: [/\.(jpg|jpeg|png)$/i, "Image must be a .jpg, .jpeg, or .png file."],
     },
     price: {
       type: Number,
@@ -51,42 +45,33 @@ const ProductSchema: Schema<IProduct> = new Schema(
       type: Number,
       min: [0, "Sale price must be a positive number."],
     },
-    discount: {
+    discountPercentage: {
       type: Number,
       min: [0, "Discount must be a positive number."],
       max: [100, "Discount cannot exceed 100."],
     },
-    quantity: {
-      type: [Number],
-      required: true,
-      validate: {
-        validator: function (v: number[]) {
-          return v.every((q) => q >= 1);
-        },
-        message: "All quantities must be at least 1.",
-      },
+    category: {
+       type: Schema.Types.ObjectId, ref: "Category" 
     },
-    colors: {
-      type: [String],
-      required: true,
-      validate: {
-        validator: function (v: any) {
-          if (typeof v === "string") {
-            v = v.split(",").map((color) => color.trim());
-          }
-          return Array.isArray(v) && v.every((color) => /^[a-zA-Z\s]{3,30}$/.test(color));
-        },
-        message: "Each color must be 3 to 30 letters long and contain only letters or spaces.",
-      },
+    brand: {
+      type: String,
     },
-    
+    stock: {
+      type: Number,
+      min: [0, "Stock must be a non-negative number."],
+    },
+    rating: {
+      type: Number,
+      default: 0, // Ensures no undefined values
+    },
   },
   { timestamps: true }
 );
 
+// Auto-calculate salePrice if discountPercentage exists
 ProductSchema.pre<IProduct>("save", function (next) {
-  if (this.discount) {
-    this.salePrice = this.price - this.price * (this.discount / 100);
+  if (this.discountPercentage) {
+    this.salePrice = this.price - this.price * (this.discountPercentage / 100);
   } else {
     this.salePrice = this.price;
   }
