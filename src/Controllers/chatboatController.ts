@@ -1,4 +1,4 @@
-import { Request, Response } from "express"; // Import Express types
+import { Request, Response } from "express"; 
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import dotenv from "dotenv";
 

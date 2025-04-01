@@ -4,8 +4,8 @@ import authMiddleware from '../middleware/authMiddlewate'
 
 const router = express.Router();
 
-router.post("/cart/:userId",authMiddleware, placeOrderFromCart); 
-router.post("/direct", authMiddleware, placeDirectOrder); 
-router.post("/:userId", authMiddleware, getOrdersByUser); 
+router.post("/cart/:userId", placeOrderFromCart); 
+router.post("/direct", placeDirectOrder); 
+router.post("/:userId", getOrdersByUser); 
 
 export default router;

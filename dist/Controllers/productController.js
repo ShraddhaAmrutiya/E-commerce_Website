@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getProductById = exports.getProductsByCategory = exports.deleteProduct = exports.updateProduct = exports.readProduct = exports.createProduct = void 0;
+exports.getproductBYCategoryname = exports.getProductById = exports.getProductsByCategory = exports.deleteProduct = exports.updateProduct = exports.readProduct = exports.createProduct = void 0;
 const productModel_1 = require("../Models/productModel");
 const categoryModel_1 = require("../Models/categoryModel");
 const mongoose_1 = __importDefault(require("mongoose"));
@@ -100,14 +100,17 @@ const readProduct = async (req, res) => {
 exports.readProduct = readProduct;
 const getProductsByCategory = async (req, res) => {
     try {
-        const { categoryName } = req.params;
-        const category = await categoryModel_1.Category.findOne({ name: categoryName });
+        const { id } = req.params;
+        // Fix: find category by `_id`
+        const category = await categoryModel_1.Category.findById(id);
         if (!category) {
-            return res.status(404).json({ message: `Category '${categoryName}' not found.` });
+            return res.status(404).json({ message: `Category '${id}' not found.` });
         }
+        // Fetch all products related to this category
         const products = await productModel_1.Product.find({ category: category._id });
         return res.status(200).json({
-            message: `Products in category: ${categoryName}`,
+            message: `Products in category: ${category.name}`,
+            category: category.name, // Optional: Include category name in response
             products,
         });
     }
@@ -178,32 +181,6 @@ const updateProduct = async (req, res) => {
     }
 };
 exports.updateProduct = updateProduct;
-// const deleteProduct = async (req: Request<{ _id: string }>, res: Response) => {
-//   const { _id } = req.params;
-//   try {
-//     // Ensure _id is a valid ObjectId
-//     if (!mongoose.Types.ObjectId.isValid(_id)) {
-//       return res.status(400).json({ message: "Invalid product ID" });
-//     }
-//     const deleteProduct = await Product.findByIdAndDelete(_id);
-//     if (!deleteProduct) {
-//       return res.status(404).json({ message: "Product not found" });
-//     }
-//     if (deleteProduct.image) {
-//       const imagePath = path.join(__dirname, '..', 'uploads', deleteProduct.image); // Adjust path if needed
-//       fs.unlink(imagePath, (err) => {
-//         if (err) {
-//           console.error("Error deleting image:", err);
-//         } else {
-//           console.log("Image deleted successfully.");
-//         }
-//       });
-//     }
-//     return res.status(200).json({ message: "Product deleted." });
-//   } catch (error) {
-//     return res.status(500).json({ error: (error as Error).message });
-//   }
-// };
 const deleteProduct = async (req, res) => {
     const { _id } = req.params;
     try {
@@ -252,3 +229,24 @@ const getProductById = async (req, res) => {
     }
 };
 exports.getProductById = getProductById;
+const getproductBYCategoryname = async (req, res) => {
+    try {
+        const categoryname = req.params.categoryname;
+        const category = await categoryModel_1.Category.findOne({ name: categoryname });
+        if (!category) {
+            console.log("Category not found:", categoryname);
+            return res.status(404).json({ message: "Category not found" });
+        }
+        const products = await productModel_1.Product.find({ category: category._id });
+        if (!products.length) {
+            console.log("No products found for category:", categoryname);
+            return res.status(404).json({ message: "No products found" });
+        }
+        res.json({ products });
+    }
+    catch (error) {
+        console.error(error);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+exports.getproductBYCategoryname = getproductBYCategoryname;

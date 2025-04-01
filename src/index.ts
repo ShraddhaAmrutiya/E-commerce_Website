@@ -14,16 +14,30 @@ import ProductRoutes from './Routers/ProductRout'
 import cartRoutes from './Routers/cartRoutes'
 import orderRoute from './Routers/orderRoutes'
 import chatbot from './Routers/chatboatRout'
+import cookieParser from "cookie-parser";
 
 
 dotenv.config();
+const allowedOrigins = ["http://localhost:5173", "http://localhost:3000"]; // Add frontend origins
 
 const app = express();
-app.use(cors({ origin: "http://localhost:5173" }));
+app.use(
+  cors({
+    origin: allowedOrigins,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    credentials: true,
+    optionsSuccessStatus: 200, 
+    allowedHeaders: ["Content-Type", "Authorization", "token"], 
+
+  })
+);app.use(cookieParser());
 
 const server = http.createServer(app);
 const io = new Server(server, {
-  cors: { origin: "http://localhost:5173", methods: ["GET","HEAD","PUT","PATCH","POST","DELETE"],credentials: true,  },
+  cors: { origin: "http://localhost:5173",
+     methods: ["GET","HEAD","PUT","PATCH","POST","DELETE"],
+     credentials: true, 
+     allowedHeaders: ["Content-Type", "Authorization", "token"],  },
 });
 
 const uploadPath = path.join(process.cwd(), "uploads");
@@ -57,29 +71,29 @@ const users = {};
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  // Store username when user joins
-  socket.on("joinChat", (username) => {
-    users[socket.id] = username;
-    console.log(`User joined: ${username} (${socket.id})`);
+  // Store username  when user joins
+  socket.on("joinChat", (username ) => {
+    users[socket.id] = username ;
+    console.log(`User joined: ${username } (${socket.id})`);
 
     // Notify all users (including sender)
-    io.emit("userJoined", `${username} joined the chat`);
+    io.emit("userJoined", `${username } joined the chat`);
   });
 
   // Handle messages
   socket.on("sendMessage", (data) => {
-    const username = users[socket.id] || "Unknown";
-    console.log(`Message from ${username}: ${data.text}`);
+    const username  = users[socket.id] || "Unknown";
+    console.log(`Message from ${username }: ${data.text}`);
     io.emit("receiveMessage", data);
   });
 
   // Handle disconnection
   socket.on("disconnect", () => {
-    const username = users[socket.id] || "Unknown";
-    console.log(`User disconnected: ${username} (${socket.id})`);
+    const username  = users[socket.id] || "Unknown";
+    console.log(`User disconnected: ${username } (${socket.id})`);
     
     // Notify all users
-    io.emit("userLeft", `${username} left the chat`);
+    io.emit("userLeft", `${username } left the chat`);
 
     delete users[socket.id]; // Remove user from list
   });

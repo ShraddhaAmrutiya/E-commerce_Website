@@ -30,7 +30,7 @@ exports.User = void 0;
 const mongoose_1 = __importStar(require("mongoose"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const UserSchema = new mongoose_1.default.Schema({
-    userName: { type: String, required: true },
+    username: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     Role: { type: String, required: true, },
     password: { type: String, required: true },

@@ -1,4 +1,4 @@
-import { createProduct, readProduct, updateProduct, deleteProduct, getProductsByCategory,getProductById } from '../Controllers/productController';
+import { createProduct, readProduct, updateProduct, deleteProduct, getproductBYCategoryname,getProductById } from '../Controllers/productController';
 import express from 'express';
 import authMiddleware from '../middleware/authMiddlewate';
 import isAdmin from '../middleware/admin';
@@ -30,15 +30,16 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-router.post("/create", authMiddleware, isAdmin, upload.single("image"), createProduct);
+router.post("/create", upload.single("image"), createProduct);
 
 router.get('/all',readProduct);
 
-router.put('/update/:id', authMiddleware, upload.single("image"), updateProduct);
+router.put('/update/:id', upload.single("image"), updateProduct);
 
 router.delete('/delete/:_id', deleteProduct);
 router.get('/:_id', getProductById);
 
-router.get("/category/:categoryName", getProductsByCategory);
+router.get("/category/:categoryname",getproductBYCategoryname);
+
 
 export default router;

@@ -21,14 +21,14 @@ const transporter = nodemailer.createTransport({
   });
 
 export interface RegisterRequestBody {
-  userName: string;
+  username : string;
   email:string
   password: string;
   Role?: string;
 }
 
 export interface LoginRequestBody {
-  userName: string;
+  username : string;
   password: string;
 }
 
@@ -37,9 +37,9 @@ const registerUser = async (
     req: Request<{}, {}, RegisterRequestBody>,
     res: Response
   ) => {
-    const { userName, password,email, Role } = req.body;
+    const { username , password,email, Role } = req.body;
   
-    if (!userName || !password ||!email) {
+    if (!username  || !password ||!email) {
       return res.status(400).send({ message: "Fill the required fields." });
     }
    
@@ -49,7 +49,7 @@ const registerUser = async (
       if (user) return res.status(400).json({ message: "User already exists" });
   
       const newUser = new User({
-        userName,
+        username ,
         email,
         password,
         Role: Role ,
@@ -61,7 +61,7 @@ const registerUser = async (
       res.status(201).json({
         message: "User registered successfully",
         _id: newUser._id,
-        userName: newUser.userName,
+        username : newUser.username ,
       });
     } catch (error) {
       res
@@ -72,10 +72,56 @@ const registerUser = async (
   
 
 
+// const loginUser = async (req: Request, res: Response): Promise<Response> => {
+//   const { userName, password } = req.body;
+// console.log("login" , req.body);
+
+//   if (!userName || !password) { 
+//     return res.status(400).json({ message: "Fill the required fields." });
+//   }
+
+//   try {
+//     const user = await User.findOne({ userName });
+//     if (!user) {
+//       return res.status(401).json({ message: "Invalid credentials" });
+//     }
+
+
+//     const isMatch = await bcrypt.compare(password, user.password);
+
+//     if (!isMatch) {
+//       return res.status(401).json({ message: "Invalid credentials" });
+//     }
+
+//     if (!SECRET_KEY) {
+//       return res.status(500).json({
+//         message: "JWT secrets are not defined in the environment variables.",
+//       });
+//     }
+
+//     const accessToken = jwt.sign(
+//       { id: user._id, tokenVersion: user.tokenVersion },
+//       SECRET_KEY,
+//       { expiresIn: "1h" }
+//     );
+
+//     return res.status(200).json({
+//       message: "User logged in successfully.",
+//       accessToken,
+//       userId: user._id,  // 👈 Add this line
+//       userName
+//     });
+//   } catch (error) {
+//     return res.status(500).json({ error: (error as Error).message });
+//   }
+// };
+
+
 const loginUser = async (req: Request, res: Response): Promise<Response> => {
   const { userName, password } = req.body;
+  // console.log("📥 Received Token in Header:", req.headers.token);
 
-  if (!userName || !password) {
+  if (!userName || !password) { 
     return res.status(400).json({ message: "Fill the required fields." });
   }
 
@@ -85,9 +131,7 @@ const loginUser = async (req: Request, res: Response): Promise<Response> => {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-
     const isMatch = await bcrypt.compare(password, user.password);
-
     if (!isMatch) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
@@ -104,15 +148,18 @@ const loginUser = async (req: Request, res: Response): Promise<Response> => {
       { expiresIn: "1h" }
     );
 
+    // console.log("🟢 Generated Token:", accessToken); // ✅ Debugging line
+
     return res.status(200).json({
       message: "User logged in successfully.",
-      accessToken,
+      accessToken, 
+      userId: user._id, 
+      userName
     });
   } catch (error) {
     return res.status(500).json({ error: (error as Error).message });
   }
 };
-
 
  const forgotPassword = async (req: Request, res: Response) => {
     const { email } = req.body;
@@ -137,7 +184,7 @@ const loginUser = async (req: Request, res: Response): Promise<Response> => {
         subject: "Password Reset Request",
         text: `You requested a password reset. Use the following token to reset your password: ${resetToken}`,
         html: `<p>You requested a password reset.</p>
-               <p>Use the following token to reset your password:</p>
+               <p>Use the following token to reset your password:</p> 
                <p><strong>${resetToken}</strong></p>`,
       };
   
@@ -151,14 +198,14 @@ const loginUser = async (req: Request, res: Response): Promise<Response> => {
 
 
   const resetPasswordWithOldPassword = async (req: Request, res: Response) => {
-    const { userName, oldPassword, newPassword } = req.body;
+    const { username , oldPassword, newPassword } = req.body;
 
-    if (!userName || !oldPassword || !newPassword) {
+    if (!username  || !oldPassword || !newPassword) {
         return res.status(400).json({ message: "All fields are required." });
     }
 
     try {
-        const user = await User.findOne({ userName });
+        const user = await User.findOne({ username  });
 
         if (!user) {
             return res.status(404).json({ message: "User not found." });
@@ -170,18 +217,15 @@ const loginUser = async (req: Request, res: Response): Promise<Response> => {
             return res.status(401).json({ message: "Incorrect old password." });
         }
 
-        //  Hash the new password
         const saltRounds = 10;
         const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
 
-        //  Update the user password
         user.password = hashedPassword;
 
-        // Ensure tokenVersion exists before incrementing
         if (typeof user.tokenVersion === "number") {
             user.tokenVersion += 1;
         } else {
-            user.tokenVersion = 1; // Initialize if undefined
+            user.tokenVersion = 1; 
         }
 
         await user.save();
@@ -211,7 +255,7 @@ const resetPassword = async (req: Request, res: Response) => {
 
     user.password = newPassword;
     user.resetToken = undefined;
-    user.tokenVersion += 1; // Increment tokenVersion to invalidate old tokens
+    user.tokenVersion += 1; 
     await user.save();
 
     return res.status(200).json({ message: "Password reset successfully. Please log in again." });
@@ -229,7 +273,7 @@ const getUser = async (req: Request, res: Response) => {
   const { id } = req.params;
 
   try {
-    const user = await User.findById(id).select("-password"); // Exclude password field
+    const user = await User.findById(id).select("-password"); 
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
@@ -241,13 +285,32 @@ const getUser = async (req: Request, res: Response) => {
 
 const getAllUsers = async (req: Request, res: Response) => {
   try {
-    const users = await User.find().select("-password"); // Exclude passwords for security
+    const users = await User.find().select("-password"); 
     return res.status(200).json(users);
   } catch (error) {
     return res.status(500).json({ message: "Server error", error: (error as Error).message });
   }
 };
 
+const checkAuthStatus = async (req: Request, res: Response) => {
+  try {
+    const user = await User.findById(req.user.id).select("-password"); // Fetch user excluding the password
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    // Send user data as a response
+    return res.status(200).json({
+      userName: user.username,
+      userId: user._id,
+      isLoggedIn: true,
+    });
+  } catch (error) {
+    return res.status(500).json({ message: "Server error", error: (error as Error).message });
+  }
+};
+
+
 export { registerUser, loginUser,forgotPassword,resetPassword ,logoutUser,getUser,getAllUsers,
-  resetPasswordWithOldPassword
+  resetPasswordWithOldPassword,checkAuthStatus
 };

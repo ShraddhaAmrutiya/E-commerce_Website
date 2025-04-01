@@ -10,12 +10,12 @@ export const userSwagger = {
               schema: {
                 type: "object",
                 properties: {
-                  userName: { type: "string", example: "johndoe" },
+                  username : { type: "string", example: "johndoe" },
                   email: { type: "string", example: "johndoe@example.com" },
                   password: { type: "string", example: "password123" },
                   Role: { type: "string", example: "user" }
                 },
-                required: ["userName", "email", "password"]
+                required: ["username ", "email", "password"]
               }
             }
           }
@@ -38,10 +38,10 @@ export const userSwagger = {
               schema: {
                 type: "object",
                 properties: {
-                  userName: { type: "string", example: "johndoe" },
+                  username : { type: "string", example: "johndoe" },
                   password: { type: "string", example: "password123" }
                 },
-                required: ["userName", "password"]
+                required: ["username ", "password"]
               }
             }
           }
@@ -120,9 +120,9 @@ export const userSwagger = {
                 properties: {
                   oldPassword: { type: "string", example: "abcdef123456" },
                   newPassword: { type: "string", example: "newpassword123" },
-                  userName : { type: "string", example: "johndoe" }
+                  username  : { type: "string", example: "johndoe" }
                 },
-                required: ["oldPassword", "newPassword","userName"]
+                required: ["oldPassword", "newPassword","username "]
               }
             }
           }

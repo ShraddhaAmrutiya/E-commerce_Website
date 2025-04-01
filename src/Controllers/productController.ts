@@ -138,20 +138,23 @@ const readProduct = async (req: Request, res: Response) => {
 };
 
 
-const getProductsByCategory = async (req: Request<{ categoryName: string }>, res: Response) => {
+const getProductsByCategory = async (req: Request<{ id: string }>, res: Response) => {
   try {
-    const { categoryName } = req.params;
+    const { id } = req.params;
 
-    const category = await Category.findOne({ name: categoryName });
+    // Fix: find category by `_id`
+    const category = await Category.findById(id); 
 
     if (!category) {
-      return res.status(404).json({ message: `Category '${categoryName}' not found.` });
+      return res.status(404).json({ message: `Category '${id}' not found.` });
     }
 
+    // Fetch all products related to this category
     const products = await Product.find({ category: category._id });
 
     return res.status(200).json({
-      message: `Products in category: ${categoryName}`,
+      message: `Products in category: ${category.name}`,
+      category: category.name, // Optional: Include category name in response
       products,
     });
   } catch (error) {
@@ -216,36 +219,6 @@ const updateProduct = async (req: Request<{ id: string }, {}, ProductRequestBody
 };
 
 
-// const deleteProduct = async (req: Request<{ _id: string }>, res: Response) => {
-//   const { _id } = req.params;
-
-//   try {
-//     // Ensure _id is a valid ObjectId
-//     if (!mongoose.Types.ObjectId.isValid(_id)) {
-//       return res.status(400).json({ message: "Invalid product ID" });
-//     }
-
-//     const deleteProduct = await Product.findByIdAndDelete(_id);
-//     if (!deleteProduct) {
-//       return res.status(404).json({ message: "Product not found" });
-//     }
-
-//     if (deleteProduct.image) {
-//       const imagePath = path.join(__dirname, '..', 'uploads', deleteProduct.image); // Adjust path if needed
-//       fs.unlink(imagePath, (err) => {
-//         if (err) {
-//           console.error("Error deleting image:", err);
-//         } else {
-//           console.log("Image deleted successfully.");
-//         }
-//       });
-//     }
-
-//     return res.status(200).json({ message: "Product deleted." });
-//   } catch (error) {
-//     return res.status(500).json({ error: (error as Error).message });
-//   }
-// };
 
 const deleteProduct = async (req: Request<{ _id: string }>, res: Response) => {
   const { _id } = req.params;
@@ -303,6 +276,31 @@ const getProductById = async (req: Request<{ _id: string }>, res: Response) => {
     return res.status(500).json({ error: (error as Error).message });
   }
 };
+  
+
+const getproductBYCategoryname = async (req, res) => {
+  try {
+    const categoryname = req.params.categoryname;
+
+    const category = await Category.findOne({ name: categoryname });
+    if (!category) {
+      console.log("Category not found:", categoryname);
+      return res.status(404).json({ message: "Category not found" });
+    }
+
+    const products = await Product.find({ category: category._id });
+
+    if (!products.length) {
+      console.log("No products found for category:", categoryname);
+      return res.status(404).json({ message: "No products found" });
+    }
+
+    res.json({ products });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
+};
 
 
-export { createProduct, readProduct, updateProduct, deleteProduct, getProductsByCategory,getProductById };
+export { createProduct, readProduct, updateProduct, deleteProduct, getProductsByCategory,getProductById,getproductBYCategoryname };

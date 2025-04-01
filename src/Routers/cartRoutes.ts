@@ -6,16 +6,12 @@ import isAdmin from '../middleware/admin';
 
 const router = express.Router();
 
-// Get cart by userId
-router.get("/:userId",authMiddleware, getCart);
+router.get("/:userId", authMiddleware,getCart);
 
-// Update product quantity in cart
-router.put("/",authMiddleware, updateCart);
+router.put("/", updateCart);
 
-// Remove product from cart
-router.delete("/", authMiddleware,removeFromCart);
+router.delete("/",removeFromCart);
 
-// Clear entire cart
-router.delete("/:userId", authMiddleware,clearCart);
+router.delete("/:userId",clearCart);
 
 export default router;

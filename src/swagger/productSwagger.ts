@@ -107,19 +107,19 @@ export const productSwagger = {
       },
     },
   },
-  "/products/category/{categoryName}": {
+  "/category/products/{id}": {
     get: {
       summary: "Get products by category name",
       description: "Fetch all products that belong to a specific category.",
-      tags: ["Products"],
+      tags: ["Category"],
       security: [{ bearerAuth: [] }],
       parameters: [
         {
-          name: "categoryName",
+          name: "id",
           in: "path",
           required: true,
           schema: { type: "string" },
-          description: "The name of the category to search for.",
+          description: "The id of the category to search for.",
         },
       ],
       responses: {

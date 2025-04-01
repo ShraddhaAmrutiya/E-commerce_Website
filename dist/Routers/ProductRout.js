@@ -5,8 +5,6 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 const productController_1 = require("../Controllers/productController");
 const express_1 = __importDefault(require("express"));
-const authMiddlewate_1 = __importDefault(require("../middleware/authMiddlewate"));
-const admin_1 = __importDefault(require("../middleware/admin"));
 const multer_1 = __importDefault(require("multer"));
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
@@ -30,10 +28,10 @@ const storage = multer_1.default.diskStorage({
     }
 });
 const upload = (0, multer_1.default)({ storage });
-router.post("/create", authMiddlewate_1.default, admin_1.default, upload.single("image"), productController_1.createProduct);
+router.post("/create", upload.single("image"), productController_1.createProduct);
 router.get('/all', productController_1.readProduct);
-router.put('/update/:id', authMiddlewate_1.default, upload.single("image"), productController_1.updateProduct);
+router.put('/update/:id', upload.single("image"), productController_1.updateProduct);
 router.delete('/delete/:_id', productController_1.deleteProduct);
 router.get('/:_id', productController_1.getProductById);
-router.get("/category/:categoryName", productController_1.getProductsByCategory);
+router.get("/category/:categoryname", productController_1.getproductBYCategoryname);
 exports.default = router;

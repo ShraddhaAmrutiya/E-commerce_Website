@@ -6,23 +6,28 @@ import {
   updateCategory, 
   deleteCategory
 } from '../Controllers/CategoryController';
+import { getProductsByCategory} from '../Controllers/productController';
+
 import authMiddleware from '../middleware/authMiddlewate';
 import isAdmin from '../middleware/admin';
 
 const router = express.Router();
 
-router.post('/add', authMiddleware, isAdmin, createCategory);
+router.post('/add', createCategory);
 
 
-router.get('/list', authMiddleware, getCategories);
+router.get('/list',authMiddleware, getCategories);
 
 
-router.get('/:id', authMiddleware, isAdmin,getCategoryById);
+router.get('/:id',getCategoryById);
 
 
-router.put('/:id', authMiddleware, isAdmin, updateCategory);
+router.put('/:id',  updateCategory);
 
 
-router.delete('/:id', authMiddleware, isAdmin, deleteCategory);
+router.delete('/:id', deleteCategory);
+
+router.get('/products/:id', getProductsByCategory);
+
 
 export default router;
