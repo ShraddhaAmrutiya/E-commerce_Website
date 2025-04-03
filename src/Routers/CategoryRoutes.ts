@@ -16,7 +16,7 @@ const router = express.Router();
 router.post('/add', createCategory);
 
 
-router.get('/list',authMiddleware, getCategories);
+router.get('/list', getCategories);
 
 
 router.get('/:id',getCategoryById);

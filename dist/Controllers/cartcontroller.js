@@ -52,14 +52,49 @@ const getCart = async (req, res) => {
     }
 };
 exports.getCart = getCart;
+// export const updateCart = async (req: Request, res: Response) => {
+//   const { userId, productId, quantity } = req.body;
+//   try {
+//     if (!mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(productId)) {
+//       return res.status(400).json({ message: "Invalid userId or productId format" });
+//     }
+//     let cart = await Cart.findOne({ userId: new mongoose.Types.ObjectId(userId) });
+//     if (!cart) {
+//       cart = new Cart({
+//         userId: new mongoose.Types.ObjectId(userId),
+//         products: [{ productId: new mongoose.Types.ObjectId(productId), quantity }],
+//       });
+//       await cart.save();
+//       return res.status(201).json({ message: "New cart created with product", cart });
+//     }
+//     const productObjectId = new mongoose.Types.ObjectId(productId);
+//     const productIndex = cart.products.findIndex((p) => p.productId.equals(productObjectId));
+//     if (productIndex >= 0) {
+//       cart.products[productIndex].quantity = quantity;
+//     } else {
+//       cart.products.push({ productId: productObjectId, quantity });
+//     }
+//     await cart.save();
+//     return res.status(200).json({ message: "Cart updated", cart });
+//   } catch (error) {
+//     console.error("Error updating cart:", error);
+//     return res.status(500).json({ error: (error as Error).message });
+//   }
+// };
 const updateCart = async (req, res) => {
     const { userId, productId, quantity } = req.body;
     try {
+        // 🔥 Validate `userId` and `productId` format
         if (!mongoose_1.default.Types.ObjectId.isValid(userId) || !mongoose_1.default.Types.ObjectId.isValid(productId)) {
             return res.status(400).json({ message: "Invalid userId or productId format" });
         }
+        // 🔥 Validate `quantity`
+        if (!Number.isInteger(quantity) || quantity <= 0) {
+            return res.status(400).json({ message: "Quantity must be a positive integer" });
+        }
         let cart = await cartModel_1.default.findOne({ userId: new mongoose_1.default.Types.ObjectId(userId) });
         if (!cart) {
+            // 🔥 Create new cart if none exists
             cart = new cartModel_1.default({
                 userId: new mongoose_1.default.Types.ObjectId(userId),
                 products: [{ productId: new mongoose_1.default.Types.ObjectId(productId), quantity }],
@@ -67,20 +102,26 @@ const updateCart = async (req, res) => {
             await cart.save();
             return res.status(201).json({ message: "New cart created with product", cart });
         }
+        // 🔥 Ensure `products` array exists
+        if (!Array.isArray(cart.products)) {
+            cart.products = [];
+        }
         const productObjectId = new mongoose_1.default.Types.ObjectId(productId);
         const productIndex = cart.products.findIndex((p) => p.productId.equals(productObjectId));
         if (productIndex >= 0) {
+            // 🔥 Update existing product quantity
             cart.products[productIndex].quantity = quantity;
         }
         else {
+            // 🔥 Add new product to cart
             cart.products.push({ productId: productObjectId, quantity });
         }
         await cart.save();
-        return res.status(200).json({ message: "Cart updated", cart });
+        return res.status(200).json({ message: "Cart updated successfully", cart });
     }
     catch (error) {
         console.error("Error updating cart:", error);
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({ error: error.message || "Internal Server Error" });
     }
 };
 exports.updateCart = updateCart;

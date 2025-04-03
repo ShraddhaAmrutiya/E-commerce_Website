@@ -88,7 +88,7 @@ exports.registerUser = registerUser;
 // };
 const loginUser = async (req, res) => {
     const { userName, password } = req.body;
-    // console.log("📥 Received Token in Header:", req.headers.token);
+    console.log("📥 Received Token in Header:", req.headers.token);
     if (!userName || !password) {
         return res.status(400).json({ message: "Fill the required fields." });
     }

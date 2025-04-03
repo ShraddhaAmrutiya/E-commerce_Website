@@ -41,7 +41,7 @@ exports.userSwagger = {
                         schema: {
                             type: "object",
                             properties: {
-                                username: { type: "string", example: "johndoe" },
+                                userName: { type: "string", example: "johndoe" },
                                 password: { type: "string", example: "password123" }
                             },
                             required: ["username ", "password"]

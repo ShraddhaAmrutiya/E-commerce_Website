@@ -14,11 +14,12 @@ import ProductRoutes from './Routers/ProductRout'
 import cartRoutes from './Routers/cartRoutes'
 import orderRoute from './Routers/orderRoutes'
 import chatbot from './Routers/chatboatRout'
+import wishlistRoutes from './Routers/WishlistRoutes'
 import cookieParser from "cookie-parser";
 
 
 dotenv.config();
-const allowedOrigins = ["http://localhost:5173", "http://localhost:3000"]; // Add frontend origins
+const allowedOrigins = ["http://localhost:5173", "http://localhost:3000"]; 
 
 const app = express();
 app.use(
@@ -27,7 +28,7 @@ app.use(
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     credentials: true,
     optionsSuccessStatus: 200, 
-    allowedHeaders: ["Content-Type", "Authorization", "token"], 
+    allowedHeaders: ["Content-Type", "Authorization", "token","userId"], 
 
   })
 );app.use(cookieParser());
@@ -37,7 +38,7 @@ const io = new Server(server, {
   cors: { origin: "http://localhost:5173",
      methods: ["GET","HEAD","PUT","PATCH","POST","DELETE"],
      credentials: true, 
-     allowedHeaders: ["Content-Type", "Authorization", "token"],  },
+     allowedHeaders: ["Content-Type", "Authorization", "token","userId"],  },
 });
 
 const uploadPath = path.join(process.cwd(), "uploads");
@@ -110,6 +111,7 @@ app.use('/products',ProductRoutes)
 app.use('/cart',cartRoutes)
 app.use('/order',orderRoute)
 app.use('/chatbot',chatbot)
+app.use("/wishlist", wishlistRoutes);
 
 // Error Handling Middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

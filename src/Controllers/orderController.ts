@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import Order from "../Models/orderModel";
 import Cart from "../Models/cartModel";
 import { Product } from "../Models/productModel";
+import { User } from "../Models/userModel";
 import mongoose from "mongoose";
 
 export const placeOrderFromCart = async (req: Request, res: Response) => {
@@ -48,9 +49,16 @@ export const placeOrderFromCart = async (req: Request, res: Response) => {
 };
 
 // Place Direct Order (Without Adding to Cart)
+
 export const placeDirectOrder = async (req: Request, res: Response) => {
   try {
     const { userId, productId, stock } = req.body;
+
+  
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
     const product = await Product.findById(productId);
     if (!product) {
@@ -63,9 +71,10 @@ export const placeDirectOrder = async (req: Request, res: Response) => {
 
     const totalPrice = product.price * stock;
 
+    // ✅ Fix: Change "stock" to "quantity" (as per schema)
     const newOrder = new Order({
       userId: new mongoose.Types.ObjectId(userId),
-      products: [{ productId: new mongoose.Types.ObjectId(productId), stock }],
+      products: [{ productId: new mongoose.Types.ObjectId(productId), quantity: stock }], // 🔹 Fix: Use `quantity`
       totalPrice,
       status: "Pending",
     });
@@ -78,10 +87,10 @@ export const placeDirectOrder = async (req: Request, res: Response) => {
 
     return res.status(201).json({ message: "Direct order placed successfully", order: newOrder });
   } catch (error) {
+    console.error("Order Creation Error:", error);
     return res.status(500).json({ error: (error as Error).message });
   }
 };
-
 
 export const getOrdersByUser = async (req: Request, res: Response) => {
   try {

@@ -19,16 +19,17 @@ const ProductRout_1 = __importDefault(require("./Routers/ProductRout"));
 const cartRoutes_1 = __importDefault(require("./Routers/cartRoutes"));
 const orderRoutes_1 = __importDefault(require("./Routers/orderRoutes"));
 const chatboatRout_1 = __importDefault(require("./Routers/chatboatRout"));
+const WishlistRoutes_1 = __importDefault(require("./Routers/WishlistRoutes"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 dotenv_1.default.config();
-const allowedOrigins = ["http://localhost:5173", "http://localhost:3000"]; // Add frontend origins
+const allowedOrigins = ["http://localhost:5173", "http://localhost:3000"];
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({
     origin: allowedOrigins,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     credentials: true,
     optionsSuccessStatus: 200,
-    allowedHeaders: ["Content-Type", "Authorization", "token"],
+    allowedHeaders: ["Content-Type", "Authorization", "token", "userId"],
 }));
 app.use((0, cookie_parser_1.default)());
 const server = http_1.default.createServer(app);
@@ -36,7 +37,7 @@ const io = new socket_io_1.Server(server, {
     cors: { origin: "http://localhost:5173",
         methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
         credentials: true,
-        allowedHeaders: ["Content-Type", "Authorization", "token"], },
+        allowedHeaders: ["Content-Type", "Authorization", "token", "userId"], },
 });
 const uploadPath = path_1.default.join(process.cwd(), "uploads");
 console.log("Serving uploads from:", uploadPath);
@@ -94,6 +95,7 @@ app.use('/products', ProductRout_1.default);
 app.use('/cart', cartRoutes_1.default);
 app.use('/order', orderRoutes_1.default);
 app.use('/chatbot', chatboatRout_1.default);
+app.use("/wishlist", WishlistRoutes_1.default);
 // Error Handling Middleware
 app.use((err, req, res, next) => {
     console.error(err);
