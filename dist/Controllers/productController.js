@@ -3,7 +3,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getproductBYCategoryname = exports.getProductById = exports.getProductsByCategory = exports.deleteProduct = exports.updateProduct = exports.readProduct = exports.createProduct = void 0;
+exports.search = exports.getproductBYCategoryname = exports.getProductById = exports.getProductsByCategory = exports.deleteProduct = exports.updateProduct = exports.readProduct = exports.createProduct = void 0;
 const productModel_1 = require("../Models/productModel");
 const categoryModel_1 = require("../Models/categoryModel");
 const mongoose_1 = __importDefault(require("mongoose"));
@@ -54,12 +54,10 @@ const createProduct = async (req, res) => {
 exports.createProduct = createProduct;
 const readProduct = async (req, res) => {
     try {
-        const limit = parseInt(req.query.limit) || 10; // Default limit: 10
-        // Fetch products with category populated
+        const limit = parseInt(req.query.limit) || 10;
         const products = await productModel_1.Product.find()
             .populate("category", "name")
-            .limit(limit) // Apply the limit
-            .lean()
+            .limit(limit)
             .exec();
         if (!products || products.length === 0) {
             return res.status(404).json({ message: "No products found" });
@@ -80,6 +78,7 @@ const readProduct = async (req, res) => {
                 stock: product.stock,
                 brand: product.brand,
                 image: product.image,
+                rating: product.rating
             });
         }
         return res.json({
@@ -101,12 +100,10 @@ exports.readProduct = readProduct;
 const getProductsByCategory = async (req, res) => {
     try {
         const { id } = req.params;
-        // Fix: find category by `_id`
         const category = await categoryModel_1.Category.findById(id);
         if (!category) {
             return res.status(404).json({ message: `Category '${id}' not found.` });
         }
-        // Fetch all products related to this category
         const products = await productModel_1.Product.find({ category: category._id });
         return res.status(200).json({
             message: `Products in category: ${category.name}`,
@@ -250,3 +247,25 @@ const getproductBYCategoryname = async (req, res) => {
     }
 };
 exports.getproductBYCategoryname = getproductBYCategoryname;
+//  const search =async (req, res) => {
+//   const { q } = req.query;
+//   const products = await Product.find({ name: { $regex: q, $options: "i" } });
+//   res.json(products);
+// }
+// // controllers/productController.ts
+const search = async (req, res) => {
+    try {
+        const query = req.query.q;
+        console.log('query:', query);
+        const products = await productModel_1.Product.find({
+            title: { $regex: query, $options: "i" },
+        });
+        console.log("Matched products:", products);
+        res.json(products);
+    }
+    catch (err) {
+        console.error("Search error:", err);
+        res.status(500).json({ message: "Server error" });
+    }
+};
+exports.search = search;

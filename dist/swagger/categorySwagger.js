@@ -59,6 +59,8 @@ exports.categorySwagger = {
                 500: { description: "Server error" }
             }
         },
+    },
+    "/category/update/{id}": {
         put: {
             summary: "Update a category",
             tags: ["Category"],
@@ -91,7 +93,8 @@ exports.categorySwagger = {
                 500: { description: "Server error" }
             }
         },
-        delete: {
+    },
+    "/category/delete/{id}": { delete: {
             summary: "Delete a category",
             tags: ["Category"],
             security: [{ bearerAuth: [] }],
@@ -108,6 +111,5 @@ exports.categorySwagger = {
                 404: { description: "Category not found" },
                 500: { description: "Server error" }
             }
-        }
-    }
+        } }
 };

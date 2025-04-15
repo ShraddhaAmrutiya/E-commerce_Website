@@ -71,7 +71,6 @@ export const placeDirectOrder = async (req: Request, res: Response) => {
 
     const totalPrice = product.price * stock;
 
-    // ✅ Fix: Change "stock" to "quantity" (as per schema)
     const newOrder = new Order({
       userId: new mongoose.Types.ObjectId(userId),
       products: [{ productId: new mongoose.Types.ObjectId(productId), quantity: stock }], // 🔹 Fix: Use `quantity`

@@ -20,120 +20,159 @@ const transporter = nodemailer.createTransport({
     },
   });
 
-export interface RegisterRequestBody {
-  username : string;
-  email:string
-  password: string;
-  Role?: string;
-}
-
+  interface RegisterRequestBody {
+    userName: string;
+    firstName?: string;
+    lastName?: string;
+    email: string;
+    phone?: string;
+    age?: number;
+    gender?: string;
+    Role: string;
+    password: string;
+  }
+  
 export interface LoginRequestBody {
-  username : string;
+  userName : string;
   password: string;
 }
 
 
-const registerUser = async (
-    req: Request<{}, {}, RegisterRequestBody>,
-    res: Response
-  ) => {
-    const { username , password,email, Role } = req.body;
-  
-    if (!username  || !password ||!email) {
-      return res.status(400).send({ message: "Fill the required fields." });
-    }
-   
-  
-    try {
-      let user = await User.findOne({ email });
-      if (user) return res.status(400).json({ message: "User already exists" });
-  
-      const newUser = new User({
-        username ,
-        email,
-        password,
-        Role: Role ,
-      });
-      await newUser.save();
-      
-      await new Cart({ userId: newUser._id, products: [] }).save();
+//add if you want to regiser andd ten it redirect to login
+// const registerUser = async (
+//   req: Request<{}, {}, RegisterRequestBody>,
+//   res: Response
+// ) => {
+//   const {
+//     userName,
+//     password,
+//     email,
+//     Role,
+//     firstName,
+//     lastName,
+//     phone,
+//     age,
+//     gender,
+//   } = req.body;
 
-      res.status(201).json({
-        message: "User registered successfully",
-        _id: newUser._id,
-        username : newUser.username ,
-      });
-    } catch (error) {
-      res
-        .status(500)
-        .send({  error: (error as Error).message });
-    }
-  };
-  
-
-
-// const loginUser = async (req: Request, res: Response): Promise<Response> => {
-//   const { userName, password } = req.body;
-// console.log("login" , req.body);
-
-//   if (!userName || !password) { 
-//     return res.status(400).json({ message: "Fill the required fields." });
+//   if (!userName || !password || !email) {
+//     return res.status(400).send({ message: "Fill the required fields." });
 //   }
 
 //   try {
-//     const user = await User.findOne({ userName });
-//     if (!user) {
-//       return res.status(401).json({ message: "Invalid credentials" });
+//     const existingUser = await User.findOne({ email });
+//     if (existingUser) {
+//       return res.status(400).json({ message: "User already exists" });
 //     }
 
+//     const newUser = new User({
+//       userName,
+//       email,
+//       password,
+//       Role,
+//       firstName,
+//       lastName,
+//       phone,
+//       age,
+//       gender,
+//     });
 
-//     const isMatch = await bcrypt.compare(password, user.password);
+//     await newUser.save();
 
-//     if (!isMatch) {
-//       return res.status(401).json({ message: "Invalid credentials" });
-//     }
+//     await new Cart({ userId: newUser._id, products: [] }).save();
 
-//     if (!SECRET_KEY) {
-//       return res.status(500).json({
-//         message: "JWT secrets are not defined in the environment variables.",
-//       });
-//     }
-
-//     const accessToken = jwt.sign(
-//       { id: user._id, tokenVersion: user.tokenVersion },
-//       SECRET_KEY,
-//       { expiresIn: "1h" }
-//     );
-
-//     return res.status(200).json({
-//       message: "User logged in successfully.",
-//       accessToken,
-//       userId: user._id,  // 👈 Add this line
-//       userName
+//     res.status(201).json({
+//       success: true,  // Added success flag
+//       message: "User registered successfully",  // Confirmation message
+//       _id: newUser._id,
+//       userName: newUser.userName,
 //     });
 //   } catch (error) {
-//     return res.status(500).json({ error: (error as Error).message });
+//     res.status(500).send({ error: (error as Error).message });
 //   }
 // };
+
+//use this if you want to direct login autometic after register
+const registerUser = async (
+  req: Request<{}, {}, RegisterRequestBody>,
+  res: Response
+) => {
+  const {
+    userName,
+    password,
+    email,
+    Role,
+    firstName,
+    lastName,
+    phone,
+    age,
+    gender,
+  } = req.body;
+
+  if (!userName || !password || !email) {
+    return res.status(400).send({ message: "Fill the required fields." });
+  }
+
+  try {
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+
+    const newUser = new User({
+      userName,
+      email,
+      password,
+      Role,
+      firstName,
+      lastName,
+      phone,
+      age,
+      gender,
+    });
+
+    await newUser.save();
+
+    await new Cart({ userId: newUser._id, products: [] }).save();
+
+    const token = jwt.sign({ id: newUser._id }, process.env.SECRET_KEY!, {
+      expiresIn: "7d",
+    });
+
+    res.status(201).json({
+      success: true,
+      message: "User registered successfully",
+      token,
+      user: {
+        _id: newUser._id,
+        userName: newUser.userName,
+        email: newUser.email,
+        Role: newUser.Role,
+      },
+    });
+  } catch (error) {
+    res.status(500).send({ error: (error as Error).message });
+  }
+};
 
 
 const loginUser = async (req: Request, res: Response): Promise<Response> => {
   const { userName, password } = req.body;
-console.log("📥 Received Token in Header:", req.headers.token);
 
+  // Check if both fields are provided
   if (!userName || !password) { 
-    return res.status(400).json({ message: "Fill the required fields." });
+    return res.status(400).json({ message: "Please fill in both username and password." });
   }
 
   try {
     const user = await User.findOne({ userName });
     if (!user) {
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(401).json({ message: "Invalid username" }); // More specific error
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
-      return res.status(401).json({ message: "Invalid credentials" });
+      return res.status(401).json({ message: "Incorrect password" }); // More specific error
     }
 
     if (!SECRET_KEY) {
@@ -148,15 +187,15 @@ console.log("📥 Received Token in Header:", req.headers.token);
       { expiresIn: "1h" }
     );
 
-    // console.log("🟢 Generated Token:", accessToken); // ✅ Debugging line
-
     return res.status(200).json({
       message: "User logged in successfully.",
       accessToken, 
       userId: user._id, 
-      userName
+      userName,
+      role: user.Role 
     });
   } catch (error) {
+    console.error(error); // Log any errors for debugging
     return res.status(500).json({ error: (error as Error).message });
   }
 };
@@ -198,14 +237,14 @@ console.log("📥 Received Token in Header:", req.headers.token);
 
 
   const resetPasswordWithOldPassword = async (req: Request, res: Response) => {
-    const { username , oldPassword, newPassword } = req.body;
+    const { userName , oldPassword, newPassword } = req.body;
 
-    if (!username  || !oldPassword || !newPassword) {
+    if (!userName  || !oldPassword || !newPassword) {
         return res.status(400).json({ message: "All fields are required." });
     }
 
     try {
-        const user = await User.findOne({ username  });
+        const user = await User.findOne({ userName  });
 
         if (!user) {
             return res.status(404).json({ message: "User not found." });
@@ -301,7 +340,7 @@ const checkAuthStatus = async (req: Request, res: Response) => {
 
     // Send user data as a response
     return res.status(200).json({
-      userName: user.username,
+      userName: user.userName,
       userId: user._id,
       isLoggedIn: true,
     });

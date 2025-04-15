@@ -9,7 +9,7 @@ import {
 import { getProductsByCategory} from '../Controllers/productController';
 
 import authMiddleware from '../middleware/authMiddlewate';
-import isAdmin from '../middleware/admin';
+import checkRole from '../middleware/admin';
 
 const router = express.Router();
 
@@ -22,10 +22,10 @@ router.get('/list', getCategories);
 router.get('/:id',getCategoryById);
 
 
-router.put('/:id',  updateCategory);
+router.put('/update/:id',  updateCategory);
 
 
-router.delete('/:id', deleteCategory);
+router.delete('/delete/:id', deleteCategory);
 
 router.get('/products/:id', getProductsByCategory);
 

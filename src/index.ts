@@ -17,7 +17,6 @@ import chatbot from './Routers/chatboatRout'
 import wishlistRoutes from './Routers/WishlistRoutes'
 import cookieParser from "cookie-parser";
 
-
 dotenv.config();
 const allowedOrigins = ["http://localhost:5173", "http://localhost:3000"]; 
 
@@ -42,7 +41,6 @@ const io = new Server(server, {
 });
 
 const uploadPath = path.join(process.cwd(), "uploads");
-console.log("Serving uploads from:", uploadPath);
 app.use("/uploads", express.static(uploadPath));
 app.use(express.json());
 // MongoDB Connection
@@ -50,59 +48,52 @@ mongoose.connect(process.env.URI as string)
   .then(() => console.log("Connected to MongoDB"))
   .catch((error) => console.error(error));
 
-// Swagger Authentication
 const swaggerAuth = basicAuth({
   users: { [process.env.SWAGGER_USER]: process.env.SWAGGER_PASS },
   challenge: true,
 });
 
-// Serve Swagger Docs
 app.use("/api-docs", swaggerAuth, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
-// Default Route (Fixes "Cannot GET /")
 app.get("/", (req: Request, res: Response) => {
   res.send("Welcome to the E-Commerce API with Live Chat!");
 });
 
-// Serve Static Files (For Chat Frontend)
 app.use(express.static(path.join(__dirname, "../public")));
 
 const users = {};
 
+
 io.on("connection", (socket) => {
   console.log("User connected:", socket.id);
 
-  // Store username  when user joins
-  socket.on("joinChat", (username ) => {
-    users[socket.id] = username ;
-    console.log(`User joined: ${username } (${socket.id})`);
+  socket.on("joinChat", (userName ) => {
+    users[socket.id] = userName ;
+    console.log(`User joined: ${userName } (${socket.id})`);
 
-    // Notify all users (including sender)
-    io.emit("userJoined", `${username } joined the chat`);
+    io.emit("userJoined", `${userName } joined the chat`);
   });
 
-  // Handle messages
   socket.on("sendMessage", (data) => {
-    const username  = users[socket.id] || "Unknown";
-    console.log(`Message from ${username }: ${data.text}`);
+    const userName  = users[socket.id] || "Unknown";
+    console.log(`Message from ${userName }: ${data.text}`);
     io.emit("receiveMessage", data);
   });
 
-  // Handle disconnection
   socket.on("disconnect", () => {
-    const username  = users[socket.id] || "Unknown";
-    console.log(`User disconnected: ${username } (${socket.id})`);
+    const userName  = users[socket.id] || "Unknown";
+    console.log(`User disconnected: ${userName } (${socket.id})`);
     
-    // Notify all users
-    io.emit("userLeft", `${username } left the chat`);
+    io.emit("userLeft", `${userName } left the chat`);
 
-    delete users[socket.id]; // Remove user from list
+    delete users[socket.id]; 
   });
 });
 app.use('/uploads', (req, res, next) => {
-  console.log("Serving:", req.path);
   next();
 }, express.static('uploads'));
+
+
 
 
 app.use('/users',UserRoutes);

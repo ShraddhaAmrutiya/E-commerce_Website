@@ -3,7 +3,6 @@ import Wishlist from "../Models/wishlistModel";
 import {Product} from "../Models/productModel";
 
 
-// ✅ Add product to wishlist
 export const addToWishlist = async (req: Request, res: Response) => {
     try {
       const userId = req.headers["userId"] || req.headers["userid"]; // Extract userId from headers
@@ -12,15 +11,12 @@ export const addToWishlist = async (req: Request, res: Response) => {
   
       const { productId } = req.body;
   
-      // Check if product exists
       const product = await Product.findById(productId);
       if (!product) return res.status(404).json({ message: "Product not found" });
   
-      // Check if already in wishlist
       const existingWishlistItem = await Wishlist.findOne({ userId, productId });
       if (existingWishlistItem) return res.status(400).json({ message: "Product already in wishlist" });
   
-      // Add to wishlist
       const wishlistItem = new Wishlist({ userId, productId });
       await wishlistItem.save();
   
@@ -31,7 +27,6 @@ export const addToWishlist = async (req: Request, res: Response) => {
   };
   
 
-// ✅ Get user's wishlist
 export const getWishlist = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;  
@@ -46,14 +41,11 @@ export const getWishlist = async (req: Request, res: Response) => {
   }
 };
 
-// ✅ Remove product from wishlist
 export const removeFromWishlist = async (req: Request, res: Response) => {
   try {
     const { productId } = req.params;
     const userId = req.headers["userId"] || req.headers["userid"];
-    console.log("Extracted userId:", userId);
     if (!userId) return res.status(401).json({ message: "Unauthorized: User ID missing" });
-        console.log("Received userId:", userId);
 
     if (!userId) return res.status(401).json({ message: "Unauthorized: User ID missing" });
 

@@ -1,6 +1,6 @@
 import { Category } from "../Models/categoryModel";
 import express, { Request, Response } from "express";
-
+import { Product } from "../Models/productModel";
 export interface CategoryRequestBody {
   name: string;
   description?: string;
@@ -54,14 +54,21 @@ const getCategoryById = async (
   }
 };
 
-const updateCategory = async (
+
+
+ const updateCategory = async (
   req: Request<{ id: string }, {}, CategoryRequestBody>,
   res: Response
 ) => {
   const { id } = req.params;
   const { name, description } = req.body;
 
+  if (!name || !description) {
+    return res.status(400).json({ message: "Name and description are required." });
+  }
+
   try {
+
     const updatedCategory = await Category.findByIdAndUpdate(
       id,
       { name, description },
@@ -76,10 +83,13 @@ const updateCategory = async (
       message: "Category updated.",
       category: updatedCategory,
     });
-  } catch (error) {
-    return res.status(500).json({ error: (error as Error).message });
+  } catch (error: any) {
+    console.error("Update error:", error);
+    return res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
+
 
 const deleteCategory = async (
   req: Request<{ id: string }, {}, {}>,
@@ -88,15 +98,33 @@ const deleteCategory = async (
   const { id } = req.params;
 
   try {
-    const deletedCategory = await Category.findByIdAndDelete(id);
-    if (!deletedCategory) {
+    const category = await Category.findById(id);
+    if (!category) {
       return res.status(404).json({ message: "Category not found." });
     }
-    return res.status(200).json({ message: "Category deleted." });
+
+    const products = await Product.find({ category: category._id });
+
+    if (products.length > 0) {
+      const deletedProducts = await Product.deleteMany({ category: category._id });
+      if (deletedProducts.deletedCount === 0) {
+        return res.status(404).json({ message: "No products found under this category." });
+      }
+    }
+
+    const deletedCategory = await Category.findByIdAndDelete(id);
+    if (!deletedCategory) {
+      return res.status(404).json({ message: "Failed to delete category." });
+    }
+
+    return res.status(200).json({
+      message: "Category and associated products deleted successfully."
+    });
   } catch (error) {
     return res.status(500).json({ error: (error as Error).message });
   }
 };
+
 
 export {
   createCategory,

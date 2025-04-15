@@ -33,67 +33,65 @@ export interface UpdateRequestBody {
 export interface ICategory extends Document {
   name: string;
 }
-const createProduct = async (req: Request<{}, {}, ProductRequestBody>, res: Response) => {
-  try {
-    let { category, title, description, price, salePrice, discountPercentage, stock, brand, rating, image } = req.body;
+  const createProduct = async (req: Request<{}, {}, ProductRequestBody>, res: Response) => {
+    try {
+      let { category, title, description, price, salePrice, discountPercentage, stock, brand, rating, image } = req.body;
 
-    if (!category || !title || !price) {
-      return res.status(400).json({ message: "Category, title, and price are required." });
+      if (!category || !title || !price) {
+        return res.status(400).json({ message: "Category, title, and price are required." });
+      }
+
+      // Find category by name and get its ObjectId
+      const categoryDoc = await Category.findOne({ name: category });
+
+      if (!categoryDoc) {
+        return res.status(400).json({ message: `Category '${category}' not found.` });
+      }
+
+      let finalSalePrice = salePrice !== undefined ? salePrice : price;
+      let finalDiscount = discountPercentage !== undefined ? discountPercentage : 0;
+
+      if (salePrice) {
+        finalDiscount = Math.round(((price - salePrice) / price) * 100);
+      }
+
+      if (discountPercentage) {
+        finalSalePrice = price - price * (discountPercentage / 100);
+      }
+
+      const imageUrl = req.file ? `/uploads/${req.file.filename}` : image || null;
+
+      const newProduct = new Product({
+        category: categoryDoc._id, 
+        title,
+        description,
+        price,
+        image: imageUrl,
+        salePrice: finalSalePrice,
+        discountPercentage: finalDiscount,
+        stock,
+        brand,
+        rating,
+      });
+
+      await newProduct.save();
+
+      return res.status(201).json({
+        message: "Product created successfully.",
+        product: newProduct,
+      });
+    } catch (error) {
+      return res.status(500).json({ error: (error as Error).message });
     }
-
-    // Find category by name and get its ObjectId
-    const categoryDoc = await Category.findOne({ name: category });
-
-    if (!categoryDoc) {
-      return res.status(400).json({ message: `Category '${category}' not found.` });
-    }
-
-    let finalSalePrice = salePrice !== undefined ? salePrice : price;
-    let finalDiscount = discountPercentage !== undefined ? discountPercentage : 0;
-
-    if (salePrice) {
-      finalDiscount = Math.round(((price - salePrice) / price) * 100);
-    }
-
-    if (discountPercentage) {
-      finalSalePrice = price - price * (discountPercentage / 100);
-    }
-
-    const imageUrl = req.file ? `/uploads/${req.file.filename}` : image || null;
-
-    const newProduct = new Product({
-      category: categoryDoc._id, // Store ObjectId instead of string
-      title,
-      description,
-      price,
-      image: imageUrl,
-      salePrice: finalSalePrice,
-      discountPercentage: finalDiscount,
-      stock,
-      brand,
-      rating,
-    });
-
-    await newProduct.save();
-
-    return res.status(201).json({
-      message: "Product created successfully.",
-      product: newProduct,
-    });
-  } catch (error) {
-    return res.status(500).json({ error: (error as Error).message });
-  }
-};
+  };
 
 const readProduct = async (req: Request, res: Response) => {
   try {
-    const limit = parseInt(req.query.limit as string) || 10; // Default limit: 10
+    const limit = parseInt(req.query.limit as string) || 10;
 
-    // Fetch products with category populated
     const products = await Product.find()
       .populate<{ category: { name: string } }>("category", "name")
-      .limit(limit) // Apply the limit
-      .lean()
+      .limit(limit) 
       .exec();
 
     if (!products || products.length === 0) {
@@ -119,6 +117,7 @@ const readProduct = async (req: Request, res: Response) => {
         stock: product.stock,
         brand: product.brand,
         image: product.image,
+        rating:product.rating
       });
     }
 
@@ -142,14 +141,12 @@ const getProductsByCategory = async (req: Request<{ id: string }>, res: Response
   try {
     const { id } = req.params;
 
-    // Fix: find category by `_id`
     const category = await Category.findById(id); 
 
     if (!category) {
       return res.status(404).json({ message: `Category '${id}' not found.` });
     }
 
-    // Fetch all products related to this category
     const products = await Product.find({ category: category._id });
 
     return res.status(200).json({
@@ -220,7 +217,7 @@ const updateProduct = async (req: Request<{ id: string }, {}, ProductRequestBody
 
 
 
-const deleteProduct = async (req: Request<{ _id: string }>, res: Response) => {
+    const deleteProduct = async (req: Request<{ _id: string }>, res: Response) => {
   const { _id } = req.params;
 
   try {
@@ -284,14 +281,12 @@ const getproductBYCategoryname = async (req, res) => {
 
     const category = await Category.findOne({ name: categoryname });
     if (!category) {
-      console.log("Category not found:", categoryname);
       return res.status(404).json({ message: "Category not found" });
     }
 
     const products = await Product.find({ category: category._id });
 
     if (!products.length) {
-      console.log("No products found for category:", categoryname);
       return res.status(404).json({ message: "No products found" });
     }
 
@@ -302,5 +297,19 @@ const getproductBYCategoryname = async (req, res) => {
   }
 };
 
+ const search = async (req, res) => {
+  try {
+    const query = req.query.q;
 
-export { createProduct, readProduct, updateProduct, deleteProduct, getProductsByCategory,getProductById,getproductBYCategoryname };
+    const products = await Product.find({
+      title: { $regex: query, $options: "i" }, 
+    });
+
+    res.json(products);
+  } catch (err) {
+    console.error("Search error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export { createProduct, readProduct, updateProduct, deleteProduct, getProductsByCategory,getProductById,getproductBYCategoryname , search };

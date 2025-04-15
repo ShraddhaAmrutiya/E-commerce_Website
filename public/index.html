@@ -112,7 +112,7 @@
         <div class="chat-header">Live Chat</div>
         <div id="chatBox" class="chat-box"></div>
         <div class="chat-input">
-            <input id="username " type="text" placeholder="Enter your name" />
+            <input id="userName " type="text" placeholder="Enter your name" />
             <button onclick="joinChat()">Join</button>
         </div>
         <div class="chat-input">
@@ -123,21 +123,21 @@
 
     <script>
         const socket = io("http://192.168.1.241:5000");
-        let username  = "";
+        let userName  = "";
 
         function joinChat() {
-            username  = document.getElementById("username ").value;
-            if (username ) {
-                socket.emit("joinChat", username );
-                document.getElementById("username ").disabled = true;
+            userName  = document.getElementById("userName ").value;
+            if (userName ) {
+                socket.emit("joinChat", userName );
+                document.getElementById("userName ").disabled = true;
             }
         }
 
         function sendMessage() {
             const messageInput = document.getElementById("messageInput").value;
-            if (messageInput && username ) {
+            if (messageInput && userName ) {
                 const timestamp = new Date().toLocaleString();
-                socket.emit("sendMessage", { user: username , text: messageInput, time: timestamp });
+                socket.emit("sendMessage", { user: userName , text: messageInput, time: timestamp });
                 document.getElementById("messageInput").value = "";
             }
         }
@@ -147,7 +147,7 @@
             const messageElement = document.createElement("div");
             messageElement.classList.add("message");
 
-            if (data.user === username ) {
+            if (data.user === userName ) {
                 messageElement.classList.add("user-message");
             } else {
                 messageElement.classList.add("other-message");
@@ -316,21 +316,21 @@
 
     <script>
         const socket = io("http://192.168.1.241:5000");
-        let username  = "";
+        let userName  = "";
 
         function joinChat() {
-            username  = document.getElementById("username ").value.trim();
-            if (username ) {
-                socket.emit("joinChat", username );
-                document.getElementById("username ").disabled = true;
+            userName  = document.getElementById("userName ").value.trim();
+            if (userName ) {
+                socket.emit("joinChat", userName );
+                document.getElementById("userName ").disabled = true;
             }
         }
 
         function sendMessage() {
             const messageInput = document.getElementById("messageInput").value.trim();
-            if (messageInput && username ) {
+            if (messageInput && userName ) {
                 const timestamp = new Date().toLocaleTimeString();
-                socket.emit("sendMessage", { user: username , text: messageInput, time: timestamp });
+                socket.emit("sendMessage", { user: userName , text: messageInput, time: timestamp });
                 document.getElementById("messageInput").value = "";
             }
         }
@@ -346,7 +346,7 @@
             const messageElement = document.createElement("div");
             messageElement.classList.add("message");
 
-            if (data.user === username ) {
+            if (data.user === userName ) {
                 messageElement.classList.add("user-message");
             } else {
                 messageElement.classList.add("other-message");

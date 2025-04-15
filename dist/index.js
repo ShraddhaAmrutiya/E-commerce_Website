@@ -40,7 +40,6 @@ const io = new socket_io_1.Server(server, {
         allowedHeaders: ["Content-Type", "Authorization", "token", "userId"], },
 });
 const uploadPath = path_1.default.join(process.cwd(), "uploads");
-console.log("Serving uploads from:", uploadPath);
 app.use("/uploads", express_1.default.static(uploadPath));
 app.use(express_1.default.json());
 // MongoDB Connection
@@ -63,32 +62,35 @@ app.use(express_1.default.static(path_1.default.join(__dirname, "../public")));
 const users = {};
 io.on("connection", (socket) => {
     console.log("User connected:", socket.id);
-    // Store username  when user joins
-    socket.on("joinChat", (username) => {
-        users[socket.id] = username;
-        console.log(`User joined: ${username} (${socket.id})`);
+    // Store userName  when user joins
+    socket.on("joinChat", (userName) => {
+        users[socket.id] = userName;
+        console.log(`User joined: ${userName} (${socket.id})`);
         // Notify all users (including sender)
-        io.emit("userJoined", `${username} joined the chat`);
+        io.emit("userJoined", `${userName} joined the chat`);
     });
     // Handle messages
     socket.on("sendMessage", (data) => {
-        const username = users[socket.id] || "Unknown";
-        console.log(`Message from ${username}: ${data.text}`);
+        const userName = users[socket.id] || "Unknown";
+        console.log(`Message from ${userName}: ${data.text}`);
         io.emit("receiveMessage", data);
     });
     // Handle disconnection
     socket.on("disconnect", () => {
-        const username = users[socket.id] || "Unknown";
-        console.log(`User disconnected: ${username} (${socket.id})`);
+        const userName = users[socket.id] || "Unknown";
+        console.log(`User disconnected: ${userName} (${socket.id})`);
         // Notify all users
-        io.emit("userLeft", `${username} left the chat`);
+        io.emit("userLeft", `${userName} left the chat`);
         delete users[socket.id]; // Remove user from list
     });
 });
 app.use('/uploads', (req, res, next) => {
-    console.log("Serving:", req.path);
     next();
 }, express_1.default.static('uploads'));
+// app.use(express.static(path.join(__dirname, "../../e-commarceFrontEnd/dist")));
+// app.get("*", (req, res) => {
+//   res.sendFile(path.join(__dirname, "../../e-commarceFrontEnd/dist", "index.html"));
+// });
 app.use('/users', UserRouter_1.default);
 app.use('/category', CategoryRoutes_1.default);
 app.use('/products', ProductRout_1.default);

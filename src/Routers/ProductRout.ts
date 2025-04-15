@@ -1,7 +1,7 @@
-import { createProduct, readProduct, updateProduct, deleteProduct, getproductBYCategoryname,getProductById } from '../Controllers/productController';
+import { createProduct, readProduct, updateProduct, deleteProduct, getproductBYCategoryname,getProductById ,search} from '../Controllers/productController';
 import express from 'express';
 import authMiddleware from '../middleware/authMiddlewate';
-import isAdmin from '../middleware/admin';
+import checkRole from '../middleware/admin';
 import multer from 'multer';
 import fs from 'fs';
 import path from 'path';
@@ -33,6 +33,7 @@ const upload = multer({ storage });
 router.post("/create", upload.single("image"), createProduct);
 
 router.get('/all',readProduct);
+router.get('/search',search);
 
 router.put('/update/:id', upload.single("image"), updateProduct);
 

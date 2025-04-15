@@ -21,39 +21,102 @@ const transporter = nodemailer_1.default.createTransport({
         pass: process.env.EMAIL_PASS,
     },
 });
+//add if you want to regiser andd ten it redirect to login
+// const registerUser = async (
+//   req: Request<{}, {}, RegisterRequestBody>,
+//   res: Response
+// ) => {
+//   const {
+//     userName,
+//     password,
+//     email,
+//     Role,
+//     firstName,
+//     lastName,
+//     phone,
+//     age,
+//     gender,
+//   } = req.body;
+//   if (!userName || !password || !email) {
+//     return res.status(400).send({ message: "Fill the required fields." });
+//   }
+//   try {
+//     const existingUser = await User.findOne({ email });
+//     if (existingUser) {
+//       return res.status(400).json({ message: "User already exists" });
+//     }
+//     const newUser = new User({
+//       userName,
+//       email,
+//       password,
+//       Role,
+//       firstName,
+//       lastName,
+//       phone,
+//       age,
+//       gender,
+//     });
+//     await newUser.save();
+//     await new Cart({ userId: newUser._id, products: [] }).save();
+//     res.status(201).json({
+//       success: true,  // Added success flag
+//       message: "User registered successfully",  // Confirmation message
+//       _id: newUser._id,
+//       userName: newUser.userName,
+//     });
+//   } catch (error) {
+//     res.status(500).send({ error: (error as Error).message });
+//   }
+// };
+//use this if you want to direct login autometic after register
 const registerUser = async (req, res) => {
-    const { username, password, email, Role } = req.body;
-    if (!username || !password || !email) {
+    const { userName, password, email, Role, firstName, lastName, phone, age, gender, } = req.body;
+    if (!userName || !password || !email) {
         return res.status(400).send({ message: "Fill the required fields." });
     }
     try {
-        let user = await userModel_1.User.findOne({ email });
-        if (user)
+        const existingUser = await userModel_1.User.findOne({ email });
+        if (existingUser) {
             return res.status(400).json({ message: "User already exists" });
+        }
         const newUser = new userModel_1.User({
-            username,
+            userName,
             email,
             password,
-            Role: Role,
+            Role,
+            firstName,
+            lastName,
+            phone,
+            age,
+            gender,
         });
         await newUser.save();
         await new cartModel_1.default({ userId: newUser._id, products: [] }).save();
+        // ✅ Generate token
+        const token = jsonwebtoken_1.default.sign({ id: newUser._id }, process.env.SECRET_KEY, {
+            expiresIn: "7d",
+        });
+        // ✅ Return token and user info
         res.status(201).json({
+            success: true,
             message: "User registered successfully",
-            _id: newUser._id,
-            username: newUser.username,
+            token,
+            user: {
+                _id: newUser._id,
+                userName: newUser.userName,
+                email: newUser.email,
+                Role: newUser.Role,
+            },
         });
     }
     catch (error) {
-        res
-            .status(500)
-            .send({ error: error.message });
+        res.status(500).send({ error: error.message });
     }
 };
 exports.registerUser = registerUser;
 // const loginUser = async (req: Request, res: Response): Promise<Response> => {
 //   const { userName, password } = req.body;
-// console.log("login" , req.body);
+// console.log("📥 Received Token in Header:", req.headers.token);
 //   if (!userName || !password) { 
 //     return res.status(400).json({ message: "Fill the required fields." });
 //   }
@@ -76,11 +139,13 @@ exports.registerUser = registerUser;
 //       SECRET_KEY,
 //       { expiresIn: "1h" }
 //     );
+//     // console.log("🟢 Generated Token:", accessToken); // ✅ Debugging line
 //     return res.status(200).json({
 //       message: "User logged in successfully.",
-//       accessToken,
-//       userId: user._id,  // 👈 Add this line
-//       userName
+//       accessToken, 
+//       userId: user._id, 
+//       userName,
+//       Role:user.Role
 //     });
 //   } catch (error) {
 //     return res.status(500).json({ error: (error as Error).message });
@@ -88,34 +153,41 @@ exports.registerUser = registerUser;
 // };
 const loginUser = async (req, res) => {
     const { userName, password } = req.body;
-    console.log("📥 Received Token in Header:", req.headers.token);
+    console.log("📥 Received Token in Header:", req.headers.token); // You can remove or mask this log for production
+    // Check if both fields are provided
     if (!userName || !password) {
-        return res.status(400).json({ message: "Fill the required fields." });
+        return res.status(400).json({ message: "Please fill in both username and password." });
     }
     try {
+        // Find the user by username
         const user = await userModel_1.User.findOne({ userName });
         if (!user) {
-            return res.status(401).json({ message: "Invalid credentials" });
+            return res.status(401).json({ message: "Invalid username" }); // More specific error
         }
+        // Compare the provided password with the stored password
         const isMatch = await bcryptjs_1.default.compare(password, user.password);
         if (!isMatch) {
-            return res.status(401).json({ message: "Invalid credentials" });
+            return res.status(401).json({ message: "Incorrect password" }); // More specific error
         }
+        // Ensure JWT_SECRET_KEY is defined
         if (!SECRET_KEY) {
             return res.status(500).json({
                 message: "JWT secrets are not defined in the environment variables.",
             });
         }
+        // Generate the JWT token
         const accessToken = jsonwebtoken_1.default.sign({ id: user._id, tokenVersion: user.tokenVersion }, SECRET_KEY, { expiresIn: "1h" });
-        // console.log("🟢 Generated Token:", accessToken); // ✅ Debugging line
+        // Send the success response with the JWT and user info
         return res.status(200).json({
             message: "User logged in successfully.",
             accessToken,
             userId: user._id,
-            userName
+            userName,
+            role: user.Role // Ensure that 'Role' is correctly spelled in the response
         });
     }
     catch (error) {
+        console.error(error); // Log any errors for debugging
         return res.status(500).json({ error: error.message });
     }
 };
@@ -151,12 +223,12 @@ const forgotPassword = async (req, res) => {
 };
 exports.forgotPassword = forgotPassword;
 const resetPasswordWithOldPassword = async (req, res) => {
-    const { username, oldPassword, newPassword } = req.body;
-    if (!username || !oldPassword || !newPassword) {
+    const { userName, oldPassword, newPassword } = req.body;
+    if (!userName || !oldPassword || !newPassword) {
         return res.status(400).json({ message: "All fields are required." });
     }
     try {
-        const user = await userModel_1.User.findOne({ username });
+        const user = await userModel_1.User.findOne({ userName });
         if (!user) {
             return res.status(404).json({ message: "User not found." });
         }
@@ -240,7 +312,7 @@ const checkAuthStatus = async (req, res) => {
         }
         // Send user data as a response
         return res.status(200).json({
-            userName: user.username,
+            userName: user.userName,
             userId: user._id,
             isLoggedIn: true,
         });

@@ -55,58 +55,59 @@ export const categorySwagger = {
           404: { description: "Category not found" },
           500: { description: "Server error" }
         }
-      },
-      put: {
-        summary: "Update a category",
-        tags: ["Category"],
-        security: [{ bearerAuth: [] }],
+      },},
+ "/category/update/{id}":{
+  put: {
+    summary: "Update a category",
+    tags: ["Category"],
+    security: [{ bearerAuth: [] }],
 
-        parameters: [
-          {
-            name: "id",
-            in: "path",
-            required: true,
-            schema: { type: "string" }
-          }
-        ],
-        requestBody: {
-          required: true,
-          content: {
-            "application/json": {
-              schema: {
-                type: "object",
-                properties: {
-                  name: { type: "string", example: "Updated Electronics" },
-                  description: { type: "string", example: "Updated description" }
-                }
-              }
+    parameters: [
+      {
+        name: "id",
+        in: "path",
+        required: true,
+        schema: { type: "string" }
+      }
+    ],
+    requestBody: {
+      required: true,
+      content: {
+        "application/json": {
+          schema: {
+            type: "object",
+            properties: {
+              name: { type: "string", example: "Updated Electronics" },
+              description: { type: "string", example: "Updated description" }
             }
           }
-        },
-        responses: {
-          200: { description: "Category updated successfully" },
-          404: { description: "Category not found" },
-          500: { description: "Server error" }
-        }
-      },
-      delete: {
-        summary: "Delete a category",
-        tags: ["Category"],
-        security: [{ bearerAuth: [] }],
-        parameters: [
-          {
-            name: "id",
-            in: "path",
-            required: true,
-            schema: { type: "string" }
-          }
-        ],
-        responses: {
-          200: { description: "Category deleted successfully" },
-          404: { description: "Category not found" },
-          500: { description: "Server error" }
         }
       }
+    },
+    responses: {
+      200: { description: "Category updated successfully" },
+      404: { description: "Category not found" },
+      500: { description: "Server error" }
     }
+  },
+ },
+ "/category/delete/{id}":{  delete: {
+  summary: "Delete a category",
+  tags: ["Category"],
+  security: [{ bearerAuth: [] }],
+  parameters: [
+    {
+      name: "id",
+      in: "path",
+      required: true,
+      schema: { type: "string" }
+    }
+  ],
+  responses: {
+    200: { description: "Category deleted successfully" },
+    404: { description: "Category not found" },
+    500: { description: "Server error" }
+  }
+}}
   };
   
