@@ -4,7 +4,8 @@ import { UserDocument } from "../Models/userModel"; // Import the User model's d
 declare global {
   namespace Express {
     interface Request { 
-      user?: UserDocument; // Add 'user' to the Request type, which is optional
+      user?: UserDocument;
+      userId:string // Add 'user' to the Request type, which is optional
     }
   }
 }

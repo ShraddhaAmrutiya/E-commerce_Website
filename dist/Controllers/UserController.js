@@ -14,7 +14,7 @@ dotenv_1.default.config();
 const SECRET_KEY = process.env.SECRET_KEY;
 const transporter = nodemailer_1.default.createTransport({
     host: process.env.EMAIL_HOST,
-    port: parseInt(process.env.EMAIL_PORT || "587"),
+    port: parseInt(process.env.EMAIL_PORT),
     secure: false,
     auth: {
         user: process.env.EMAIL_USER,
@@ -72,12 +72,12 @@ const transporter = nodemailer_1.default.createTransport({
 const registerUser = async (req, res) => {
     const { userName, password, email, Role, firstName, lastName, phone, age, gender, } = req.body;
     if (!userName || !password || !email) {
-        return res.status(400).send({ message: "Fill the required fields." });
+        return res.status(400).json({ message: "Fill the required fields." });
     }
     try {
         const existingUser = await userModel_1.User.findOne({ email });
         if (existingUser) {
-            return res.status(400).json({ message: "User already exists" });
+            return res.status(400).json({ message: "User already exists , please use another email" });
         }
         const newUser = new userModel_1.User({
             userName,
@@ -92,102 +92,72 @@ const registerUser = async (req, res) => {
         });
         await newUser.save();
         await new cartModel_1.default({ userId: newUser._id, products: [] }).save();
-        // ✅ Generate token
-        const token = jsonwebtoken_1.default.sign({ id: newUser._id }, process.env.SECRET_KEY, {
-            expiresIn: "7d",
-        });
-        // ✅ Return token and user info
+        const token = jsonwebtoken_1.default.sign({ id: newUser._id, tokenVersion: newUser.tokenVersion }, process.env.SECRET_KEY, { expiresIn: '1d' });
+        // ✅ Send expanded response for frontend auto-login
         res.status(201).json({
             success: true,
             message: "User registered successfully",
             token,
-            user: {
-                _id: newUser._id,
-                userName: newUser.userName,
-                email: newUser.email,
-                Role: newUser.Role,
-            },
+            userId: newUser._id,
+            userName: newUser.userName,
+            Role: newUser.Role,
         });
     }
     catch (error) {
-        res.status(500).send({ error: error.message });
+        if (error.name === "ValidationError") {
+            const validationErrors = {};
+            for (let field in error.errors) {
+                validationErrors[field] = error.errors[field].message;
+            }
+            return res.status(400).json({ errors: validationErrors });
+        }
+        res.status(500).json({ error: error.message });
     }
 };
 exports.registerUser = registerUser;
-// const loginUser = async (req: Request, res: Response): Promise<Response> => {
-//   const { userName, password } = req.body;
-// console.log("📥 Received Token in Header:", req.headers.token);
-//   if (!userName || !password) { 
-//     return res.status(400).json({ message: "Fill the required fields." });
-//   }
-//   try {
-//     const user = await User.findOne({ userName });
-//     if (!user) {
-//       return res.status(401).json({ message: "Invalid credentials" });
-//     }
-//     const isMatch = await bcrypt.compare(password, user.password);
-//     if (!isMatch) {
-//       return res.status(401).json({ message: "Invalid credentials" });
-//     }
-//     if (!SECRET_KEY) {
-//       return res.status(500).json({
-//         message: "JWT secrets are not defined in the environment variables.",
-//       });
-//     }
-//     const accessToken = jwt.sign(
-//       { id: user._id, tokenVersion: user.tokenVersion },
-//       SECRET_KEY,
-//       { expiresIn: "1h" }
-//     );
-//     // console.log("🟢 Generated Token:", accessToken); // ✅ Debugging line
-//     return res.status(200).json({
-//       message: "User logged in successfully.",
-//       accessToken, 
-//       userId: user._id, 
-//       userName,
-//       Role:user.Role
-//     });
-//   } catch (error) {
-//     return res.status(500).json({ error: (error as Error).message });
-//   }
-// };
+exports.default = registerUser;
 const loginUser = async (req, res) => {
     const { userName, password } = req.body;
-    console.log("📥 Received Token in Header:", req.headers.token); // You can remove or mask this log for production
     // Check if both fields are provided
     if (!userName || !password) {
         return res.status(400).json({ message: "Please fill in both username and password." });
     }
     try {
-        // Find the user by username
+        // Find the user by userName
         const user = await userModel_1.User.findOne({ userName });
-        if (!user) {
-            return res.status(401).json({ message: "Invalid username" }); // More specific error
-        }
-        // Compare the provided password with the stored password
+        // // Check if the user exists
+        // if (!user) {
+        //   return res.status(401).json({ message: "Please enter valid credentials...." });
+        // }
+        // Compare the password
         const isMatch = await bcryptjs_1.default.compare(password, user.password);
-        if (!isMatch) {
-            return res.status(401).json({ message: "Incorrect password" }); // More specific error
+        if (!isMatch || !user) {
+            return res.status(401).json({ message: "Please enter valid credentials." });
         }
-        // Ensure JWT_SECRET_KEY is defined
+        // Check if JWT secret is defined
         if (!SECRET_KEY) {
             return res.status(500).json({
                 message: "JWT secrets are not defined in the environment variables.",
             });
         }
-        // Generate the JWT token
-        const accessToken = jsonwebtoken_1.default.sign({ id: user._id, tokenVersion: user.tokenVersion }, SECRET_KEY, { expiresIn: "1h" });
-        // Send the success response with the JWT and user info
+        // Generate access token
+        // const accessToken = jwt.sign(
+        //   { id: user._id, tokenVersion: user.tokenVersion },
+        //   SECRET_KEY,
+        //   { expiresIn: "1h" }
+        // );
+        const accessToken = jsonwebtoken_1.default.sign({ id: user._id, tokenVersion: user.tokenVersion }, process.env.SECRET_KEY, { expiresIn: '1d' });
+        // Respond with access token and user details
         return res.status(200).json({
             message: "User logged in successfully.",
             accessToken,
             userId: user._id,
-            userName,
-            role: user.Role // Ensure that 'Role' is correctly spelled in the response
+            userName: user.userName, // Ensure correct userName is sent back
+            Role: user.Role, // Ensure Role is sent back
         });
     }
     catch (error) {
-        console.error(error); // Log any errors for debugging
+        console.error(error);
         return res.status(500).json({ error: error.message });
     }
 };
@@ -202,7 +172,8 @@ const forgotPassword = async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: "User not found." });
         }
-        const resetToken = jsonwebtoken_1.default.sign({ id: user._id }, SECRET_KEY, { expiresIn: "15m" });
+        // const resetToken = jwt.sign({ id: user._id }, SECRET_KEY, { expiresIn: "15m" });
+        const resetToken = jsonwebtoken_1.default.sign({ id: user._id, tokenVersion: user.tokenVersion }, process.env.SECRET_KEY, { expiresIn: '1d' });
         user.resetToken = resetToken;
         await user.save();
         const mailOptions = {

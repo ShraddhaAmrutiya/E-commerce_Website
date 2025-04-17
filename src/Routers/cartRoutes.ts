@@ -1,27 +1,27 @@
 import express from "express";
 import { getCart, updateCart, removeFromCart, clearCart,increaseQuantity ,decreaseQuantity} from "../Controllers/cartcontroller";
 import authMiddleware from '../middleware/authMiddlewate';
-import checkRole from '../middleware/admin';
 import Cart from "../Models/cartModel";
+import checkRole from '../middleware/admin';
 
 const router = express.Router();
 
 router.get("/:userId", authMiddleware,getCart);
 
-router.put("/", updateCart);
+router.put("/", authMiddleware, updateCart);
 
-router.delete("/",removeFromCart);
+router.delete("/",authMiddleware,removeFromCart);
 
-router.delete("/:userId",clearCart);
+router.delete("/:userId",authMiddleware,clearCart);
 router.put('/increase', authMiddleware, increaseQuantity);
 router.put('/decrease', authMiddleware, decreaseQuantity);
-router.get('/count/:userId', async (req, res) => {
+router.get('/count/:userId',async (req, res) => {
     const cart = await Cart.findOne({ userId: req.params.userId });
     if (!cart) return res.json({ count: 0 });
     
     // Get the number of products in the cart (length of the products array)
     const totalCount = cart.products.length;
-  console.log(cart.products);
+  console.log("cart productes",cart.products);
   
     return res.json({ count: totalCount });
   });

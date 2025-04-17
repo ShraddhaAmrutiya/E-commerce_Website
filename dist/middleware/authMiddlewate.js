@@ -1,7 +1,4 @@
 "use strict";
-// import { Request, Response, NextFunction } from 'express';
-// import jwt from 'jsonwebtoken';
-// import { User } from '../Models/userModel'; 
 var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
@@ -9,7 +6,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const userModel_1 = require("../Models/userModel");
 const authMiddleware = async (req, res, next) => {
-    const token = req.headers.authorization?.split(" ")[1];
+    // const token = req.headers.authorization?.split(" ")[1];
+    const token = req.header('Authorization')?.replace('Bearer ', '');
     if (!token) {
         return res.status(401).json({ message: "No token provided" });
     }
@@ -19,7 +17,6 @@ const authMiddleware = async (req, res, next) => {
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
-        // Check if tokenVersion in token matches the latest version in DB
         if (user.tokenVersion !== decoded.tokenVersion) {
             return res.status(401).json({ message: "Invalid token. Please log in again." });
         }

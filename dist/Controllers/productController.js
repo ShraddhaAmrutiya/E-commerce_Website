@@ -9,11 +9,16 @@ const categoryModel_1 = require("../Models/categoryModel");
 const mongoose_1 = __importDefault(require("mongoose"));
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
+const wishlistModel_1 = __importDefault(require("../Models/wishlistModel"));
 const createProduct = async (req, res) => {
     try {
         let { category, title, description, price, salePrice, discountPercentage, stock, brand, rating, image } = req.body;
         if (!category || !title || !price) {
             return res.status(400).json({ message: "Category, title, and price are required." });
+        }
+        const sellerId = req.user?.id;
+        if (!sellerId) {
+            return res.status(400).json({ message: "Seller is not authenticated." });
         }
         // Find category by name and get its ObjectId
         const categoryDoc = await categoryModel_1.Category.findOne({ name: category });
@@ -30,7 +35,7 @@ const createProduct = async (req, res) => {
         }
         const imageUrl = req.file ? `/uploads/${req.file.filename}` : image || null;
         const newProduct = new productModel_1.Product({
-            category: categoryDoc._id, // Store ObjectId instead of string
+            category: categoryDoc._id,
             title,
             description,
             price,
@@ -40,7 +45,10 @@ const createProduct = async (req, res) => {
             stock,
             brand,
             rating,
+            seller: sellerId,
         });
+        console.log("price..................", price);
+        console.log("price..................", salePrice);
         await newProduct.save();
         return res.status(201).json({
             message: "Product created successfully.",
@@ -48,6 +56,7 @@ const createProduct = async (req, res) => {
         });
     }
     catch (error) {
+        console.log(error);
         return res.status(500).json({ error: error.message });
     }
 };
@@ -107,7 +116,7 @@ const getProductsByCategory = async (req, res) => {
         const products = await productModel_1.Product.find({ category: category._id });
         return res.status(200).json({
             message: `Products in category: ${category.name}`,
-            category: category.name, // Optional: Include category name in response
+            category: category.name,
             products,
         });
     }
@@ -124,6 +133,10 @@ const updateProduct = async (req, res) => {
         const product = await productModel_1.Product.findById(id);
         if (!product) {
             return res.status(404).json({ message: "Product not found." });
+        }
+        // Check if the user is the seller or an admin
+        if (product.seller.toString() !== req.user.id && req.user.Role !== 'admin') {
+            return res.status(403).json({ message: "Unauthorized: You can only update your own product" });
         }
         if (category !== undefined) {
             const categoryDoc = await categoryModel_1.Category.findOne({ name: category });
@@ -178,22 +191,49 @@ const updateProduct = async (req, res) => {
     }
 };
 exports.updateProduct = updateProduct;
+//     const deleteProduct = async (req: Request<{ _id: string }>, res: Response) => {
+//   const { _id } = req.params;
+//   try {
+//     const deleteProduct = await Product.findByIdAndDelete(_id);
+//     if (!deleteProduct) {
+//       return res.status(404).json({ message: "Product not found" });
+//     }
+//     if (deleteProduct.image) {
+//       const imagePath = path.join(process.cwd(), deleteProduct.image.startsWith('uploads/') ? deleteProduct.image.slice(8) : deleteProduct.image);
+//       fs.unlink(imagePath, (err) => {
+//         if (err) {
+//           console.error("Error deleting image:", err);
+//         } else {
+//           console.log("Image deleted successfully.");
+//         }
+//       });
+//     }
+//     return res.status(200).json({ message: "Product deleted." });
+//   } catch (error) {
+//     return res.status(500).json({ error: (error as Error).message });
+//   }
+// };
 const deleteProduct = async (req, res) => {
     const { _id } = req.params;
     try {
-        const deleteProduct = await productModel_1.Product.findByIdAndDelete(_id);
-        if (!deleteProduct) {
+        const product = await productModel_1.Product.findById(_id);
+        if (!product) {
             return res.status(404).json({ message: "Product not found" });
         }
-        if (deleteProduct.image) {
-            const imagePath = path_1.default.join(process.cwd(), deleteProduct.image.startsWith('uploads/') ? deleteProduct.image.slice(8) : deleteProduct.image);
-            fs_1.default.unlink(imagePath, (err) => {
-                if (err) {
+        console.log("Product Seller:", product.seller);
+        console.log("User ID from Token:", req.user.id);
+        // Check if logged-in user is the seller
+        if (product.seller.toString() !== req.user.id && req.user.Role !== 'admin') {
+            return res.status(403).json({ message: "Unauthorized: You can only update your own product" });
+        }
+        await product.deleteOne();
+        if (product.image) {
+            const imagePath = path_1.default.join(process.cwd(), product.image.startsWith('uploads/') ? product.image.slice(8) : product.image);
+            fs_1.default.unlink(imagePath, err => {
+                if (err)
                     console.error("Error deleting image:", err);
-                }
-                else {
+                else
                     console.log("Image deleted successfully.");
-                }
             });
         }
         return res.status(200).json({ message: "Product deleted." });
@@ -203,21 +243,55 @@ const deleteProduct = async (req, res) => {
     }
 };
 exports.deleteProduct = deleteProduct;
+// const getProductById = async (req: Request<{ _id: string }>, res: Response) => {
+//   try {
+//     const { _id } = req.params;
+//     // Validate if ID is a valid MongoDB ObjectId
+//     if (!mongoose.Types.ObjectId.isValid(_id)) {
+//       return res.status(400).json({ message: "Invalid product ID format." });
+//     }
+//     const product = await Product.findById(_id).populate("category", "name")
+//     .populate("brand", "name");
+//     if (!product) {
+//       return res.status(404).json({ message: "Product not found." });
+//     }
+//     return res.status(200).json({
+//       message: "Product fetched successfully.",
+//       product,
+//     });
+//   } catch (error) {
+//     console.error("Error fetching product by ID:", error);
+//     return res.status(500).json({ error: (error as Error).message });
+//   }
+// };
 const getProductById = async (req, res) => {
     try {
         const { _id } = req.params;
+        const userId = req.user?.id; // Assuming the user's ID is available via `req.user.id`
         // Validate if ID is a valid MongoDB ObjectId
         if (!mongoose_1.default.Types.ObjectId.isValid(_id)) {
             return res.status(400).json({ message: "Invalid product ID format." });
         }
-        const product = await productModel_1.Product.findById(_id).populate("category", "name")
+        // Fetch the product from the database
+        const product = await productModel_1.Product.findById(_id)
+            .populate("category", "name")
             .populate("brand", "name");
         if (!product) {
             return res.status(404).json({ message: "Product not found." });
         }
+        // Check if the user is logged in and has a wishlist
+        let isInWishlist = false;
+        if (userId) {
+            // Query the Wishlist model to check if the product is in the user's wishlist
+            const wishlistItem = await wishlistModel_1.default.findOne({ userId, productId: _id });
+            if (wishlistItem) {
+                isInWishlist = true; // If product is in the wishlist, set flag to true
+            }
+        }
         return res.status(200).json({
             message: "Product fetched successfully.",
             product,
+            isInWishlist,
         });
     }
     catch (error) {
@@ -231,12 +305,10 @@ const getproductBYCategoryname = async (req, res) => {
         const categoryname = req.params.categoryname;
         const category = await categoryModel_1.Category.findOne({ name: categoryname });
         if (!category) {
-            console.log("Category not found:", categoryname);
             return res.status(404).json({ message: "Category not found" });
         }
         const products = await productModel_1.Product.find({ category: category._id });
         if (!products.length) {
-            console.log("No products found for category:", categoryname);
             return res.status(404).json({ message: "No products found" });
         }
         res.json({ products });
@@ -247,20 +319,12 @@ const getproductBYCategoryname = async (req, res) => {
     }
 };
 exports.getproductBYCategoryname = getproductBYCategoryname;
-//  const search =async (req, res) => {
-//   const { q } = req.query;
-//   const products = await Product.find({ name: { $regex: q, $options: "i" } });
-//   res.json(products);
-// }
-// // controllers/productController.ts
 const search = async (req, res) => {
     try {
         const query = req.query.q;
-        console.log('query:', query);
         const products = await productModel_1.Product.find({
             title: { $regex: query, $options: "i" },
         });
-        console.log("Matched products:", products);
         res.json(products);
     }
     catch (err) {

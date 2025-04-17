@@ -52,7 +52,6 @@ const updateCategory = async (req, res) => {
         return res.status(400).json({ message: "Name and description are required." });
     }
     try {
-        console.log("Update payload:", { id, name, description });
         const updatedCategory = await categoryModel_1.Category.findByIdAndUpdate(id, { name, description }, { new: true, runValidators: true });
         if (!updatedCategory) {
             return res.status(404).json({ message: "Category not found." });

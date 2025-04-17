@@ -12,7 +12,7 @@ const SECRET_KEY = process.env.SECRET_KEY as string;
 
 const transporter = nodemailer.createTransport({
     host: process.env.EMAIL_HOST,
-    port: parseInt(process.env.EMAIL_PORT || "587"),
+    port: parseInt(process.env.EMAIL_PORT ),
     secure: false,
     auth: {
       user: process.env.EMAIL_USER,
@@ -93,6 +93,8 @@ export interface LoginRequestBody {
 // };
 
 //use this if you want to direct login autometic after register
+
+
 const registerUser = async (
   req: Request<{}, {}, RegisterRequestBody>,
   res: Response
@@ -110,13 +112,13 @@ const registerUser = async (
   } = req.body;
 
   if (!userName || !password || !email) {
-    return res.status(400).send({ message: "Fill the required fields." });
+    return res.status(400).json({ message: "Fill the required fields." });
   }
 
   try {
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ message: "User already exists" });
+      return res.status(400).json({ message: "User already exists , please use another email"})
     }
 
     const newUser = new User({
@@ -135,26 +137,35 @@ const registerUser = async (
 
     await new Cart({ userId: newUser._id, products: [] }).save();
 
-    const token = jwt.sign({ id: newUser._id }, process.env.SECRET_KEY!, {
-      expiresIn: "7d",
-    });
-
+    const token = jwt.sign(
+      { id: newUser._id, tokenVersion: newUser.tokenVersion },
+      process.env.SECRET_KEY!,
+      { expiresIn: '1d' }
+    );
+    
+    // ✅ Send expanded response for frontend auto-login
     res.status(201).json({
       success: true,
       message: "User registered successfully",
       token,
-      user: {
-        _id: newUser._id,
-        userName: newUser.userName,
-        email: newUser.email,
-        Role: newUser.Role,
-      },
+      userId: newUser._id,
+      userName: newUser.userName,
+      Role: newUser.Role,
     });
-  } catch (error) {
-    res.status(500).send({ error: (error as Error).message });
+  } catch (error: any) {
+    if (error.name === "ValidationError") {
+      const validationErrors: any = {};
+      for (let field in error.errors) {
+        validationErrors[field] = error.errors[field].message;
+      }
+      return res.status(400).json({ errors: validationErrors });
+    }
+
+    res.status(500).json({ error: error.message });
   }
 };
 
+export default registerUser;
 
 const loginUser = async (req: Request, res: Response): Promise<Response> => {
   const { userName, password } = req.body;
@@ -165,40 +176,53 @@ const loginUser = async (req: Request, res: Response): Promise<Response> => {
   }
 
   try {
+    // Find the user by userName
     const user = await User.findOne({ userName });
-    if (!user) {
-      return res.status(401).json({ message: "Invalid username" }); // More specific error
-    }
+    
+    // // Check if the user exists
+    // if (!user) {
+    //   return res.status(401).json({ message: "Please enter valid credentials...." });
+    // }
 
+    // Compare the password
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ message: "Incorrect password" }); // More specific error
+    if (!isMatch ||!user  ) {
+      return res.status(401).json({ message: "Please enter valid credentials." });
     }
 
+    // Check if JWT secret is defined
     if (!SECRET_KEY) {
       return res.status(500).json({
         message: "JWT secrets are not defined in the environment variables.",
       });
     }
 
+    // Generate access token
+    // const accessToken = jwt.sign(
+    //   { id: user._id, tokenVersion: user.tokenVersion },
+    //   SECRET_KEY,
+    //   { expiresIn: "1h" }
+    // );
     const accessToken = jwt.sign(
       { id: user._id, tokenVersion: user.tokenVersion },
-      SECRET_KEY,
-      { expiresIn: "1h" }
+      process.env.SECRET_KEY!,
+      { expiresIn: '1d' }
     );
-
+    
+    // Respond with access token and user details
     return res.status(200).json({
       message: "User logged in successfully.",
       accessToken, 
       userId: user._id, 
-      userName,
-      role: user.Role 
+      userName: user.userName, // Ensure correct userName is sent back
+      Role: user.Role, // Ensure Role is sent back
     });
   } catch (error) {
-    console.error(error); // Log any errors for debugging
+    console.error(error);
     return res.status(500).json({ error: (error as Error).message });
   }
 };
+
 
  const forgotPassword = async (req: Request, res: Response) => {
     const { email } = req.body;
@@ -213,8 +237,13 @@ const loginUser = async (req: Request, res: Response): Promise<Response> => {
         return res.status(404).json({ message: "User not found." });
       }
   
-      const resetToken = jwt.sign({ id: user._id }, SECRET_KEY, { expiresIn: "15m" });
-      user.resetToken = resetToken;
+      // const resetToken = jwt.sign({ id: user._id }, SECRET_KEY, { expiresIn: "15m" });
+      const resetToken = jwt.sign(
+        { id: user._id, tokenVersion: user.tokenVersion },
+        process.env.SECRET_KEY!,
+        { expiresIn: '1d' }
+      );
+            user.resetToken = resetToken;
       await user.save();
   
       const mailOptions = {

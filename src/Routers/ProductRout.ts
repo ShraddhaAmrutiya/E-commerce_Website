@@ -30,14 +30,14 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-router.post("/create", upload.single("image"), createProduct);
+router.post("/create", upload.single("image"), authMiddleware,createProduct);
 
 router.get('/all',readProduct);
 router.get('/search',search);
 
 router.put('/update/:id', upload.single("image"), updateProduct);
 
-router.delete('/delete/:_id', deleteProduct);
+router.delete('/delete/:_id',authMiddleware, deleteProduct);
 router.get('/:_id', getProductById);
 
 router.get("/category/:categoryname",getproductBYCategoryname);

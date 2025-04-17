@@ -8,31 +8,6 @@ const cartModel_1 = __importDefault(require("../Models/cartModel"));
 const mongoose_1 = __importDefault(require("mongoose"));
 const dotenv_1 = __importDefault(require("dotenv"));
 dotenv_1.default.config();
-// export const getCart = async (req: Request, res: Response) => {
-//   try {
-//     console.log("Received request for user ID:");
-//     console.log("Request Headers:", req.headers);
-//     const authHeader = req.headers.authorization;
-//     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-//       return res.status(401).json({ message: "Unauthorized: No token provided" });
-//     }
-//     const token = authHeader.split(" ")[1]; // Extract token
-//     console.log("Extracted Token:", token); // ✅ Debugging line
-//     const { userId } = req.params;
-//     if (!mongoose.Types.ObjectId.isValid(userId)) {
-//       return res.status(400).json({ message: "Invalid user ID format" });
-//     }
-//     const cart = await Cart.findOne({ userId: new mongoose.Types.ObjectId(userId) })
-//       .populate("products.productId");
-//     if (!cart) {
-//       return res.status(404).json({ message: "Cart is Empty" });
-//     }
-//     return res.status(200).json(cart);
-//   } catch (error) {
-//     console.error(error);
-//     return res.status(500).json({ error: (error as Error).message });
-//   }
-// };
 const getCart = async (req, res) => {
     try {
         const { userId } = req.params;
@@ -46,53 +21,14 @@ const getCart = async (req, res) => {
         }
         const cartItems = cart.products;
         const cartCount = cartItems.reduce((total, item) => total + (item.quantity || 0), 0);
-        // 👇 Log cart count to console
-        console.log("🛒 Total Cart Count:", cartCount);
         return res.status(200).json({ cartItems, cartCount });
     }
     catch (error) {
-        console.error("❌ Backend Error:", error);
+        console.error(" Backend Error:", error);
         return res.status(500).json({ error: error.message });
     }
 };
 exports.getCart = getCart;
-// export const updateCart = async (req: Request, res: Response) => {
-//   const { userId, productId, quantity } = req.body;
-//   try {
-//     // 🔥 Validate `userId` and `productId` format
-//     if (!mongoose.Types.ObjectId.isValid(userId) || !mongoose.Types.ObjectId.isValid(productId)) {
-//       return res.status(400).json({ message: "Invalid userId or productId format" });
-//     }
-//     // 🔥 Validate `quantity`
-//     if (!Number.isInteger(quantity) || quantity <= 0) {
-//       return res.status(400).json({ message: "Quantity must be a positive integer" });
-//     }
-//     let cart = await Cart.findOne({ userId: new mongoose.Types.ObjectId(userId) });
-//     if (!cart) {
-//       cart = new Cart({
-//         userId: new mongoose.Types.ObjectId(userId),
-//         products: [{ productId: new mongoose.Types.ObjectId(productId), quantity }],
-//       });
-//       await cart.save();
-//       return res.status(201).json({ message: "New cart created with product", cart });
-//     }
-//     if (!Array.isArray(cart.products)) {
-//       cart.products = [];
-//     }
-//     const productObjectId = new mongoose.Types.ObjectId(productId);
-//     const productIndex = cart.products.findIndex((p) => p.productId.equals(productObjectId));
-//     if (productIndex >= 0) {
-//       cart.products[productIndex].quantity = quantity;
-//     } else {
-//       cart.products.push({ productId: productObjectId, quantity });
-//     }
-//     await cart.save();
-//     return res.status(200).json({ message: "Cart updated successfully", cart });
-//   } catch (error) {
-//     console.error("Error updating cart:", error);
-//     return res.status(500).json({ error: (error as Error).message || "Internal Server Error" });
-//   }
-// };
 const updateCart = async (req, res) => {
     const { userId, productId, quantity } = req.body;
     try {
@@ -124,7 +60,6 @@ const updateCart = async (req, res) => {
             }
             await cart.save();
         }
-        // 🔥 Populate product details
         const updatedCart = await cartModel_1.default.findOne({ userId: userId }).populate("products.productId");
         const cartItems = updatedCart?.products || [];
         return res.status(200).json({

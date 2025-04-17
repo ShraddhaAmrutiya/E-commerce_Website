@@ -9,9 +9,9 @@ const authMiddlewate_1 = __importDefault(require("../middleware/authMiddlewate")
 const cartModel_1 = __importDefault(require("../Models/cartModel"));
 const router = express_1.default.Router();
 router.get("/:userId", authMiddlewate_1.default, cartcontroller_1.getCart);
-router.put("/", cartcontroller_1.updateCart);
-router.delete("/", cartcontroller_1.removeFromCart);
-router.delete("/:userId", cartcontroller_1.clearCart);
+router.put("/", authMiddlewate_1.default, cartcontroller_1.updateCart);
+router.delete("/", authMiddlewate_1.default, cartcontroller_1.removeFromCart);
+router.delete("/:userId", authMiddlewate_1.default, cartcontroller_1.clearCart);
 router.put('/increase', authMiddlewate_1.default, cartcontroller_1.increaseQuantity);
 router.put('/decrease', authMiddlewate_1.default, cartcontroller_1.decreaseQuantity);
 router.get('/count/:userId', async (req, res) => {
@@ -20,7 +20,7 @@ router.get('/count/:userId', async (req, res) => {
         return res.json({ count: 0 });
     // Get the number of products in the cart (length of the products array)
     const totalCount = cart.products.length;
-    console.log(cart.products);
+    console.log("cart productes", cart.products);
     return res.json({ count: totalCount });
 });
 exports.default = router;

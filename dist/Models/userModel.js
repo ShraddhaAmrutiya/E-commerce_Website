@@ -53,4 +53,8 @@ UserSchema.pre("save", async function (next) {
 UserSchema.methods.matchPassword = async function (password) {
     return await bcryptjs_1.default.compare(password, this.password);
 };
+UserSchema.methods.incrementTokenVersion = async function () {
+    this.tokenVersion += 1;
+    await this.save();
+};
 exports.User = (0, mongoose_1.model)("User", UserSchema);

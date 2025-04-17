@@ -16,6 +16,7 @@ import orderRoute from './Routers/orderRoutes'
 import chatbot from './Routers/chatboatRout'
 import wishlistRoutes from './Routers/WishlistRoutes'
 import cookieParser from "cookie-parser";
+import { JsonWebTokenError } from "jsonwebtoken";
 
 dotenv.config();
 const allowedOrigins = ["http://localhost:5173", "http://localhost:3000"]; 
@@ -27,7 +28,7 @@ app.use(
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     credentials: true,
     optionsSuccessStatus: 200, 
-    allowedHeaders: ["Content-Type", "Authorization", "token","userId"], 
+    allowedHeaders: ["Content-Type", "Authorization", "token","userId","userName", "Role"], 
 
   })
 );app.use(cookieParser());
@@ -37,7 +38,7 @@ const io = new Server(server, {
   cors: { origin: "http://localhost:5173",
      methods: ["GET","HEAD","PUT","PATCH","POST","DELETE"],
      credentials: true, 
-     allowedHeaders: ["Content-Type", "Authorization", "token","userId"],  },
+     allowedHeaders: ["Content-Type", "Authorization", "token","userId","userName","Role"],  },
 });
 
 const uploadPath = path.join(process.cwd(), "uploads");

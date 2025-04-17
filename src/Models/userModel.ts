@@ -64,5 +64,8 @@ UserSchema.pre("save", async function (next) {
 UserSchema.methods.matchPassword = async function (password: string) {
   return await bcrypt.compare(password, this.password);
 };
-
+UserSchema.methods.incrementTokenVersion = async function() {
+  this.tokenVersion += 1;
+  await this.save();
+};
 export const User = model<IUser>("User", UserSchema);

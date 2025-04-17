@@ -12,6 +12,7 @@ export interface IProduct extends Document {
   brand?: string;
   stock?: number;
   discountPercentage?: number;
+  seller: mongoose.Types.ObjectId | { _id: string; name: string };
 }
 
 const ProductSchema: Schema<IProduct> = new Schema(
@@ -64,6 +65,7 @@ const ProductSchema: Schema<IProduct> = new Schema(
       type: Number,
       default: 0, // Ensures no undefined values
     },
+    seller: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
   },
   { timestamps: true }
 );

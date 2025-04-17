@@ -13,7 +13,7 @@ import checkRole from '../middleware/admin';
 
 const router = express.Router();
 
-router.post('/add', createCategory);
+router.post('/add',authMiddleware, createCategory);
 
 
 router.get('/list', getCategories);
@@ -22,10 +22,10 @@ router.get('/list', getCategories);
 router.get('/:id',getCategoryById);
 
 
-router.put('/update/:id',  updateCategory);
+router.put('/update/:id', authMiddleware, updateCategory);
 
 
-router.delete('/delete/:id', deleteCategory);
+router.delete('/delete/:id',authMiddleware, deleteCategory);
 
 router.get('/products/:id', getProductsByCategory);
 

@@ -11,8 +11,8 @@ interface AuthenticatedRequest extends Request {
 }
 
 const authMiddleware = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-    const token = req.headers.authorization?.split(" ")[1];
-
+    // const token = req.headers.authorization?.split(" ")[1];
+    const token = req.header('Authorization')?.replace('Bearer ', '');
     if (!token) {
         return res.status(401).json({ message: "No token provided" });
     }
@@ -24,8 +24,6 @@ const authMiddleware = async (req: AuthenticatedRequest, res: Response, next: Ne
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
-
-        // Check if tokenVersion in token matches the latest version in DB
         if (user.tokenVersion !== decoded.tokenVersion) {
             return res.status(401).json({ message: "Invalid token. Please log in again." });
         }

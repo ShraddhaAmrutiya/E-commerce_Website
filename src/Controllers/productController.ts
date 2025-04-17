@@ -4,6 +4,8 @@ import express, { Request, Response } from "express";
 import mongoose, { Document, Types } from "mongoose";
 import path from "path";
 import fs from "fs"
+import {User} from '../Models/userModel'; 
+import Wishlist from '../Models/wishlistModel'; 
 export interface ProductRequestBody {
   category: string;
   title: string;
@@ -15,6 +17,7 @@ export interface ProductRequestBody {
   brand?: string;
   stock?: number;
   discountPercentage?: number;
+  seller: string, 
 }
 
 export interface UpdateRequestBody {
@@ -29,6 +32,14 @@ export interface UpdateRequestBody {
   image?: string;
   rating?: number;
 }
+interface AuthenticatedRequest extends Request {
+  id?:string
+  user?: {
+    id: string;
+    Role: string;
+  };
+}
+
 
 export interface ICategory extends Document {
   name: string;
@@ -40,7 +51,12 @@ export interface ICategory extends Document {
       if (!category || !title || !price) {
         return res.status(400).json({ message: "Category, title, and price are required." });
       }
+      const sellerId = req.user?.id;
 
+      if (!sellerId) {
+        return res.status(400).json({ message: "Seller is not authenticated." });
+      }
+    
       // Find category by name and get its ObjectId
       const categoryDoc = await Category.findOne({ name: category });
 
@@ -72,7 +88,10 @@ export interface ICategory extends Document {
         stock,
         brand,
         rating,
+        seller: sellerId,
       });
+console.log( "price..................",price);
+console.log( "price..................",salePrice);
 
       await newProduct.save();
 
@@ -81,6 +100,8 @@ export interface ICategory extends Document {
         product: newProduct,
       });
     } catch (error) {
+      console.log(error);
+      
       return res.status(500).json({ error: (error as Error).message });
     }
   };
@@ -151,7 +172,7 @@ const getProductsByCategory = async (req: Request<{ id: string }>, res: Response
 
     return res.status(200).json({
       message: `Products in category: ${category.name}`,
-      category: category.name, // Optional: Include category name in response
+      category: category.name, 
       products,
     });
   } catch (error) {
@@ -160,7 +181,7 @@ const getProductsByCategory = async (req: Request<{ id: string }>, res: Response
   }
 };
 
-const updateProduct = async (req: Request<{ id: string }, {}, ProductRequestBody>, res: Response) => {
+const updateProduct = async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;
   const { category, title, description, price, salePrice, discountPercentage, stock, brand, rating, image } = req.body;
 
@@ -168,6 +189,11 @@ const updateProduct = async (req: Request<{ id: string }, {}, ProductRequestBody
     const product = await Product.findById(id);
     if (!product) {
       return res.status(404).json({ message: "Product not found." });
+    }
+    
+    // Check if the user is the seller or an admin
+    if (product.seller.toString() !== req.user.id && req.user.Role !== 'admin') {
+      return res.status(403).json({ message: "Unauthorized: You can only update your own product" });
     }
 
     if (category !== undefined) {
@@ -217,26 +243,60 @@ const updateProduct = async (req: Request<{ id: string }, {}, ProductRequestBody
 
 
 
-    const deleteProduct = async (req: Request<{ _id: string }>, res: Response) => {
+//     const deleteProduct = async (req: Request<{ _id: string }>, res: Response) => {
+//   const { _id } = req.params;
+
+//   try {
+//     const deleteProduct = await Product.findByIdAndDelete(_id);
+//     if (!deleteProduct) {
+//       return res.status(404).json({ message: "Product not found" });
+//     }
+
+//     if (deleteProduct.image) {
+
+//       const imagePath = path.join(process.cwd(), deleteProduct.image.startsWith('uploads/') ? deleteProduct.image.slice(8) : deleteProduct.image);
+      
+
+//       fs.unlink(imagePath, (err) => {
+//         if (err) {
+//           console.error("Error deleting image:", err);
+//         } else {
+//           console.log("Image deleted successfully.");
+//         }
+//       });
+//     }
+
+//     return res.status(200).json({ message: "Product deleted." });
+//   } catch (error) {
+//     return res.status(500).json({ error: (error as Error).message });
+//   }
+// };
+
+const deleteProduct = async (req: AuthenticatedRequest, res: Response) => {
   const { _id } = req.params;
 
   try {
-    const deleteProduct = await Product.findByIdAndDelete(_id);
-    if (!deleteProduct) {
+    const product = await Product.findById(_id);
+
+    if (!product) {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    if (deleteProduct.image) {
+    console.log("Product Seller:", product.seller);
+    console.log("User ID from Token:", req.user.id);
 
-      const imagePath = path.join(process.cwd(), deleteProduct.image.startsWith('uploads/') ? deleteProduct.image.slice(8) : deleteProduct.image);
-      
+    // Check if logged-in user is the seller
+    if (product.seller.toString() !== req.user.id && req.user.Role !== 'admin') {
+      return res.status(403).json({ message: "Unauthorized: You can only update your own product" });
+    }
 
-      fs.unlink(imagePath, (err) => {
-        if (err) {
-          console.error("Error deleting image:", err);
-        } else {
-          console.log("Image deleted successfully.");
-        }
+    await product.deleteOne();
+
+    if (product.image) {
+      const imagePath = path.join(process.cwd(), product.image.startsWith('uploads/') ? product.image.slice(8) : product.image);
+      fs.unlink(imagePath, err => {
+        if (err) console.error("Error deleting image:", err);
+        else console.log("Image deleted successfully.");
       });
     }
 
@@ -247,33 +307,76 @@ const updateProduct = async (req: Request<{ id: string }, {}, ProductRequestBody
 };
 
 
+// const getProductById = async (req: Request<{ _id: string }>, res: Response) => {
+//   try {
+//     const { _id } = req.params;
+    
+//     // Validate if ID is a valid MongoDB ObjectId
+//     if (!mongoose.Types.ObjectId.isValid(_id)) {
+//       return res.status(400).json({ message: "Invalid product ID format." });
+//     }
+  
+
+//     const product = await Product.findById(_id).populate("category", "name")
+//     .populate("brand", "name");
+
+//     if (!product) {
+//       return res.status(404).json({ message: "Product not found." });
+//     }
+
+//     return res.status(200).json({
+//       message: "Product fetched successfully.",
+//       product,
+//     });
+//   } catch (error) {
+//     console.error("Error fetching product by ID:", error);
+//     return res.status(500).json({ error: (error as Error).message });
+//   }
+// };
+  
+
 const getProductById = async (req: Request<{ _id: string }>, res: Response) => {
   try {
     const { _id } = req.params;
-    
+    const userId = req.user?.id; // Assuming the user's ID is available via `req.user.id`
+
     // Validate if ID is a valid MongoDB ObjectId
     if (!mongoose.Types.ObjectId.isValid(_id)) {
       return res.status(400).json({ message: "Invalid product ID format." });
     }
-  
 
-    const product = await Product.findById(_id).populate("category", "name")
-    .populate("brand", "name");
+    // Fetch the product from the database
+    const product = await Product.findById(_id)
+      .populate("category", "name")
+      .populate("brand", "name");
 
     if (!product) {
       return res.status(404).json({ message: "Product not found." });
     }
 
+    // Check if the user is logged in and has a wishlist
+    let isInWishlist = false;
+    if (userId) {
+      // Query the Wishlist model to check if the product is in the user's wishlist
+      const wishlistItem = await Wishlist.findOne({ userId, productId: _id });
+
+      if (wishlistItem) {
+        isInWishlist = true; // If product is in the wishlist, set flag to true
+      }
+    }
+
     return res.status(200).json({
       message: "Product fetched successfully.",
       product,
+      isInWishlist,
     });
   } catch (error) {
     console.error("Error fetching product by ID:", error);
     return res.status(500).json({ error: (error as Error).message });
   }
 };
-  
+
+
 
 const getproductBYCategoryname = async (req, res) => {
   try {

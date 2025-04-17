@@ -14,5 +14,5 @@ router.post('/reset-password/', UserController_1.resetPassword);
 router.post('/reset-passwordwitholdpassword/', UserController_1.resetPasswordWithOldPassword);
 router.post('/logout', UserController_1.logoutUser);
 router.get("/:id", authMiddlewate_1.default, UserController_1.getUser);
-router.get("/", UserController_1.getAllUsers);
+router.get("/", authMiddlewate_1.default, UserController_1.getAllUsers);
 exports.default = router;

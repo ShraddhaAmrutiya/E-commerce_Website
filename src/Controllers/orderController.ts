@@ -5,6 +5,50 @@ import { Product } from "../Models/productModel";
 import { User } from "../Models/userModel";
 import mongoose from "mongoose";
 
+// export const placeOrderFromCart = async (req: Request, res: Response) => {
+//   try {
+//     const { userId } = req.params;
+
+//     const cart = await Cart.findOne({ userId }).populate("products.productId");
+//     if (!cart || cart.products.length === 0) {
+//       return res.status(400).json({ message: "Cart is empty" });
+//     }
+
+//     let totalPrice = 0;
+//     const products = cart.products.map((item) => {
+//       const product = item.productId as any;
+//       totalPrice += product.price * item.quantity;
+//       return {
+//         productId: product._id,
+//         stock: item.quantity,
+//       };
+//     });
+
+//     const newOrder = new Order({
+//       userId: new mongoose.Types.ObjectId(userId),
+//       products,
+//       totalPrice,
+//       status: "Pending",
+//     });
+
+//     await newOrder.save();
+
+//     for (const item of cart.products) {
+//       const product = item.productId as any;
+//       await Product.findByIdAndUpdate(product._id, {
+//         $inc: { stock: -item.quantity },
+//       });
+//     }
+
+//     await Cart.findOneAndDelete({ userId });
+
+//     return res.status(201).json({ message: "Order placed successfully", order: newOrder });
+//   } catch (error) {
+//     return res.status(500).json({ error: (error as Error).message });
+//   }
+// };
+
+// Place Direct Order (Without Adding to Cart)
 export const placeOrderFromCart = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
@@ -24,15 +68,17 @@ export const placeOrderFromCart = async (req: Request, res: Response) => {
       };
     });
 
+    // Create the new order with status "Pending"
     const newOrder = new Order({
       userId: new mongoose.Types.ObjectId(userId),
       products,
       totalPrice,
-      status: "Pending",
+      status: "Pending", // Set the order status to "Pending"
     });
 
     await newOrder.save();
 
+    // Update the product stock and remove cart items
     for (const item of cart.products) {
       const product = item.productId as any;
       await Product.findByIdAndUpdate(product._id, {
@@ -47,8 +93,6 @@ export const placeOrderFromCart = async (req: Request, res: Response) => {
     return res.status(500).json({ error: (error as Error).message });
   }
 };
-
-// Place Direct Order (Without Adding to Cart)
 
 export const placeDirectOrder = async (req: Request, res: Response) => {
   try {
