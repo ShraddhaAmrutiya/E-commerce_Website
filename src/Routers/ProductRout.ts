@@ -30,12 +30,13 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-router.post("/create", upload.single("image"), authMiddleware,createProduct);
+router.post("/create",authMiddleware, upload.single("image"),createProduct);
 
 router.get('/all',readProduct);
 router.get('/search',search);
 
-router.put('/update/:id', upload.single("image"), updateProduct);
+// router.put('/update/:id', upload.single("image"), updateProduct);
+router.put("/update/:id", authMiddleware, checkRole(['admin']), upload.single("image"), updateProduct);
 
 router.delete('/delete/:_id',authMiddleware, deleteProduct);
 router.get('/:_id', getProductById);

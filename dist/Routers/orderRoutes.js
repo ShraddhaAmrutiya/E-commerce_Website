@@ -10,4 +10,5 @@ const router = express_1.default.Router();
 router.post("/cart/:userId", authMiddlewate_1.default, orderController_1.placeOrderFromCart);
 router.post("/direct", authMiddlewate_1.default, orderController_1.placeDirectOrder);
 router.post("/:userId", authMiddlewate_1.default, orderController_1.getOrdersByUser);
+router.get('/redirect/:userId', orderController_1.getOrderRedirectButton);
 exports.default = router;

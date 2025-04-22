@@ -22,7 +22,8 @@ const orderSchema = new Schema<IOrder>(
     createdAt: { type: Date, default: Date.now },
   },
   { timestamps: true }
-);
+); 
+
 
 const Order = mongoose.model<IOrder>("Order", orderSchema);
 export default Order;

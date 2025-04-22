@@ -32,7 +32,7 @@ const ProductSchema = new mongoose_1.Schema({
     },
     title: {
         type: String,
-        required: true,
+        // required: true,
         match: [/^[a-zA-Z0-9\s.,'-]{3,100}$/, "Please enter a valid title."],
     },
     description: {
@@ -54,6 +54,8 @@ const ProductSchema = new mongoose_1.Schema({
     salePrice: {
         type: Number,
         min: [0, "Sale price must be a positive number."],
+        get: Math.floor,
+        set: Math.floor
     },
     discountPercentage: {
         type: Number,

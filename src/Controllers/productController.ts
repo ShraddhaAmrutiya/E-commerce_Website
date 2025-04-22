@@ -37,6 +37,7 @@ interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
     Role: string;
+    
   };
 }
 
@@ -44,67 +45,176 @@ interface AuthenticatedRequest extends Request {
 export interface ICategory extends Document {
   name: string;
 }
-  const createProduct = async (req: Request<{}, {}, ProductRequestBody>, res: Response) => {
-    try {
-      let { category, title, description, price, salePrice, discountPercentage, stock, brand, rating, image } = req.body;
+// const createProduct = async (req: Request<{}, {}, ProductRequestBody>, res: Response) => {
+//   try {
+//     let {
+//       category,
+//       title,
+//       description,
+//       price,
+//       salePrice: inputSalePrice, // renamed to avoid conflict
+//       discountPercentage,
+//       stock,
+//       brand,
+//       rating,
+//       image,
+//     } = req.body;
 
-      if (!category || !title || !price) {
-        return res.status(400).json({ message: "Category, title, and price are required." });
-      }
-      const sellerId = req.user?.id;
+//     // Cast all numeric fields
+//     price = Number(price);
+//     stock = Number(stock);
+//     rating = Number(rating);
+//     discountPercentage = Number(discountPercentage);
+//     const parsedSalePrice = inputSalePrice !== undefined ? Number(inputSalePrice) : undefined;
 
-      if (!sellerId) {
-        return res.status(400).json({ message: "Seller is not authenticated." });
-      }
-    
-      // Find category by name and get its ObjectId
-      const categoryDoc = await Category.findOne({ name: category });
+//     if (!category || !title || isNaN(price)) {
+//       return res.status(400).json({ message: "Category, title, and valid price are required." });
+//     }
 
-      if (!categoryDoc) {
-        return res.status(400).json({ message: `Category '${category}' not found.` });
-      }
+//     const sellerId = req.user?.id;
+//     if (!sellerId) {
+//       return res.status(400).json({ message: "Seller is not authenticated." });
+//     }
 
-      let finalSalePrice = salePrice !== undefined ? salePrice : price;
-      let finalDiscount = discountPercentage !== undefined ? discountPercentage : 0;
+//     const categoryDoc = await Category.findOne({ name: category });
+//     if (!categoryDoc) {
+//       return res.status(400).json({ message: `Category '${category}' not found.` });
+//     }
 
-      if (salePrice) {
-        finalDiscount = Math.round(((price - salePrice) / price) * 100);
-      }
+//     // Calculate finalSalePrice
+//     let finalSalePrice = price;
+//     let finalDiscount = 0;
 
-      if (discountPercentage) {
-        finalSalePrice = price - price * (discountPercentage / 100);
-      }
+//     if (!isNaN(discountPercentage) && discountPercentage > 0) {
+//       finalSalePrice = price - (price * discountPercentage) / 100;
+//       finalDiscount = discountPercentage;
+//     } else if (!isNaN(parsedSalePrice)) {
+//       finalSalePrice = parsedSalePrice;
+//       finalDiscount = Math.round(((price - parsedSalePrice) / price) * 100);
+//     }
 
-      const imageUrl = req.file ? `/uploads/${req.file.filename}` : image || null;
+//     finalSalePrice = Math.floor(Number(finalSalePrice)); // Explicitly cast to number
 
-      const newProduct = new Product({
-        category: categoryDoc._id, 
-        title,
-        description,
-        price,
-        image: imageUrl,
-        salePrice: finalSalePrice,
-        discountPercentage: finalDiscount,
-        stock,
-        brand,
-        rating,
-        seller: sellerId,
-      });
-console.log( "price..................",price);
-console.log( "price..................",salePrice);
+//     const imageUrl = req.file ? `/uploads/${req.file.filename}` : image || null;
 
-      await newProduct.save();
+//     const newProduct = new Product({
+//       category: categoryDoc._id,
+//       title,
+//       description,
+//       price,
+//       image: imageUrl,
+//       salePrice: finalSalePrice,
+//       discountPercentage: finalDiscount,
+//       stock,
+//       brand,
+//       rating,
+//       seller: sellerId,
+//     });
 
-      return res.status(201).json({
-        message: "Product created successfully.",
-        product: newProduct,
-      });
-    } catch (error) {
-      console.log(error);
-      
-      return res.status(500).json({ error: (error as Error).message });
+
+
+//     await newProduct.save();
+
+//     return res.status(201).json({
+//       message: "Product created successfully.",
+//       product: newProduct,
+//     });
+//   } catch (error) {
+//     console.log(error);
+//     return res.status(500).json({ error: (error as Error).message });
+//   }
+// };
+
+const createProduct = async (req: Request<{}, {}, ProductRequestBody>, res: Response) => {
+  try {
+    let {
+      category,
+      title,
+      description,
+      price,
+      salePrice: inputSalePrice, // renamed to avoid conflict
+      discountPercentage,
+      stock,
+      brand,
+      rating,
+      image,
+    } = req.body;
+
+    // Cast all numeric fields
+    price = Number(price);
+    stock = Number(stock);
+    rating = Number(rating);
+    discountPercentage = Number(discountPercentage);
+    const parsedSalePrice = inputSalePrice !== undefined ? Number(inputSalePrice) : undefined;
+
+    if (!category || !title || isNaN(price)) {
+      return res.status(400).json({ message: "Category, title, and valid price are required." });
     }
-  };
+
+    const sellerId = req.user?.id;
+    if (!sellerId) {
+      return res.status(400).json({ message: "Seller is not authenticated." });
+    }
+
+    const categoryDoc = await Category.findOne({ name: category });
+    if (!categoryDoc) {
+      return res.status(400).json({ message: `Category '${category}' not found.` });
+    }
+
+    // Calculate finalSalePrice
+    let finalSalePrice = price; // Default is price
+    let finalDiscount = 0;
+
+    // If the discountPercentage is 0, set salePrice equal to price
+    if (discountPercentage === 0) {
+      finalSalePrice = price;
+      finalDiscount = 0;
+    } else if (discountPercentage > 0) {
+      // If discountPercentage is greater than 0, calculate salePrice
+      finalSalePrice = price - (price * discountPercentage) / 100;
+      finalDiscount = discountPercentage;
+    } else if (parsedSalePrice && !isNaN(parsedSalePrice)) {
+      // If a salePrice is provided directly, use it
+      finalSalePrice = parsedSalePrice;
+      finalDiscount = Math.round(((price - parsedSalePrice) / price) * 100);
+    }
+
+    // Make sure salePrice is not negative
+    finalSalePrice = Math.max(finalSalePrice, 0);
+    
+    // Explicitly cast to number (if required)
+    finalSalePrice = Math.floor(Number(finalSalePrice));
+
+    const imageUrl = req.file ? `/uploads/${req.file.filename}` : image || null;
+
+    // Create new product
+    const newProduct = new Product({
+      category: categoryDoc._id,
+      title,
+      description,
+      price,
+      image: imageUrl,
+      salePrice: finalSalePrice,
+      discountPercentage: finalDiscount,
+      stock,
+      brand,
+      rating,
+      seller: sellerId,
+    });
+
+    // Save the new product to the database
+    await newProduct.save();
+
+    return res.status(201).json({
+      message: "Product created successfully.",
+      product: newProduct,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: (error as Error).message });
+  }
+};
+
 
 const readProduct = async (req: Request, res: Response) => {
   try {
@@ -181,65 +291,67 @@ const getProductsByCategory = async (req: Request<{ id: string }>, res: Response
   }
 };
 
-const updateProduct = async (req: AuthenticatedRequest, res: Response) => {
-  const { id } = req.params;
-  const { category, title, description, price, salePrice, discountPercentage, stock, brand, rating, image } = req.body;
+// const updateProduct = async (req: AuthenticatedRequest, res: Response) => {
+//   const { id } = req.params;
+//   const { category, title, description, price, salePrice, discountPercentage, stock, brand, rating, image } = req.body;
 
-  try {
-    const product = await Product.findById(id);
-    if (!product) {
-      return res.status(404).json({ message: "Product not found." });
-    }
+//   try {
+//     const product = await Product.findById(id);
+//     if (!product) {
+//       return res.status(404).json({ message: "Product not found." });
+//     }
     
-    // Check if the user is the seller or an admin
-    if (product.seller.toString() !== req.user.id && req.user.Role !== 'admin') {
-      return res.status(403).json({ message: "Unauthorized: You can only update your own product" });
-    }
+//     // Check if the user is the seller or an admin
+//     if (product.seller.toString() !== req.user.id && req.user.Role !== 'admin') {
+//       return res.status(403).json({ message: "Unauthorized: You can only update your own product" });
+//     }
 
-    if (category !== undefined) {
-      const categoryDoc: { _id: Types.ObjectId; name: string } | null = await Category.findOne({ name: category });
-      if (!categoryDoc) {
-        return res.status(400).json({ message: `Category '${category}' not found.` });
-      }
-      product.category = categoryDoc._id;
-    }
+//     if (category !== undefined) {
+//       const categoryDoc: { _id: Types.ObjectId; name: string } | null = await Category.findOne({ name: category });
+//       if (!categoryDoc) {
+//         return res.status(400).json({ message: `Category '${category}' not found.` });
+//       }
+//       product.category = categoryDoc._id;
+//     }
 
-    if (title !== undefined) product.title = title;
-    if (description !== undefined) product.description = description;
-    if (stock !== undefined) product.stock = stock;
-    if (brand !== undefined) product.brand = brand;
-    if (rating !== undefined) product.rating = rating;
-    if (image !== undefined) product.image = image;
+//     if (title !== undefined) product.title = title;
+//     if (description !== undefined) product.description = description;
+//     if (stock !== undefined) product.stock = stock;
+//     if (brand !== undefined) product.brand = brand;
+//     if (rating !== undefined) product.rating = rating;
+//     if (image !== undefined) product.image = image;
 
-    if (price !== undefined) {
-      product.price = price;
-      if (salePrice !== undefined) {
-        product.salePrice = salePrice;
-        product.discountPercentage = Math.round(((price - salePrice) / price) * 100);
-      } else if (discountPercentage !== undefined) {
-        product.discountPercentage = discountPercentage;
-        product.salePrice = price - price * (discountPercentage / 100);
-      } else {
-        product.salePrice = price;
-        product.discountPercentage = 0;
-      }
-    } else if (salePrice !== undefined) {
-      product.salePrice = salePrice;
-      product.discountPercentage = Math.round(((product.price - salePrice) / product.price) * 100);
-    } else if (discountPercentage !== undefined) {
-      product.discountPercentage = discountPercentage;
-      product.salePrice = product.price - product.price * (discountPercentage / 100);
-    }
+//     if (price !== undefined) {
+//       product.price = price;
+//       if (salePrice !== undefined) {
+//         product.salePrice = salePrice;
+//         product.discountPercentage = Math.round(((price - salePrice) / price) * 100);
+//       } else if (discountPercentage !== undefined) {
+//         product.discountPercentage = discountPercentage;
+//         product.salePrice = price - price * (discountPercentage / 100);
+//       } else {
+//         product.salePrice = price;
+//         product.discountPercentage = 0;
+//       }
+//     } else if (salePrice !== undefined) {
+//       product.salePrice = salePrice;
+//       product.discountPercentage = Math.round(((product.price - salePrice) / product.price) * 100);
+//     } else if (discountPercentage !== undefined) {
+//       product.discountPercentage = discountPercentage;
+//       product.salePrice = product.price - product.price * (discountPercentage / 100);
+//     }
 
-    await product.save();
-    return res.status(200).json({
-      message: "Product updated successfully.",
-      product,
-    });
-  } catch (error) {
-    return res.status(500).json({ error: (error as Error).message });
-  }
-};
+//     await product.save();
+//     return res.status(200).json({
+//       message: "Product updated successfully.",
+//       product,
+//     });
+//   } catch (error) {
+//     console.log(error);
+    
+//     return res.status(500).json({ error: (error as Error).message });
+//   }
+// };
 
 
 
@@ -271,6 +383,182 @@ const updateProduct = async (req: AuthenticatedRequest, res: Response) => {
 //     return res.status(500).json({ error: (error as Error).message });
 //   }
 // };
+
+
+// const updateProduct = async (req: AuthenticatedRequest, res: Response) => {
+//   const { id } = req.params;
+//   const { category, title, description, price, salePrice, discountPercentage, stock, brand, rating, image } = req.body;
+
+//   try {
+//     const product = await Product.findById(id);
+//     if (!product) {
+//       return res.status(404).json({ message: "Product not found." });
+//     }
+
+//     // Check if the user is the seller or an admin
+//     if (product.seller.toString() !== req.user.id && req.user.Role !== 'admin') {
+//       return res.status(403).json({ message: "Unauthorized: You can only update your own product" });
+//     }
+
+//     // If category is provided, update it, else keep existing category
+//     if (category !== undefined) {
+//       const categoryDoc: { _id: Types.ObjectId; name: string } | null = await Category.findOne({ name: category });
+//       if (!categoryDoc) {
+//         return res.status(400).json({ message: `Category '${category}' not found.` });
+//       }
+//       product.category = categoryDoc._id;
+//     }
+
+//     // Only update fields that are provided
+//     if (title !== undefined) product.title = title;
+//     if (description !== undefined) product.description = description;
+//     if (stock !== undefined) product.stock = stock;
+//     if (brand !== undefined) product.brand = brand;
+//     if (rating !== undefined) product.rating = rating;
+    
+//     // Only update image if provided
+//     if (image !== undefined && image !== '') {
+//       product.image = image;
+//     }
+
+//     // Handle price and salePrice logic if provided
+//     if (price !== undefined && price !== '') {
+//       product.price = price;
+
+//       if (salePrice !== undefined && salePrice !== '') {
+//         product.salePrice = salePrice;
+//         product.discountPercentage = Math.round(((price - salePrice) / price) * 100);
+//       } else if (discountPercentage !== undefined && discountPercentage !== '') {
+//         product.discountPercentage = discountPercentage;
+//         product.salePrice = price - price * (discountPercentage / 100);
+//       } else {
+//         // If no salePrice or discountPercentage is provided, keep previous values
+//         if (product.salePrice === undefined) {
+//           product.salePrice = price; // default to price if no salePrice exists
+//         }
+//         if (product.discountPercentage === undefined) {
+//           product.discountPercentage = 0; // default to 0% if no discount exists
+//         }
+//       }
+//     } else if (salePrice !== undefined && salePrice !== '') {
+//       product.salePrice = salePrice;
+//       product.discountPercentage = Math.round(((product.price - salePrice) / product.price) * 100);
+//     } else if (discountPercentage !== undefined && discountPercentage !== '') {
+//       product.discountPercentage = discountPercentage;
+//       product.salePrice = product.price - product.price * (discountPercentage / 100);
+//     }
+
+//     // Save the updated product
+//     await product.save();
+
+//     return res.status(200).json({
+//       message: "Product updated successfully.",
+//       product,
+//     });
+//   } catch (error) {
+//     console.log(error);
+//     return res.status(500).json({ error: (error as Error).message });
+//   }
+// };
+// Update the category assignment part to ensure proper type handling:
+
+const updateProduct = async (req: AuthenticatedRequest, res: Response) => {
+  const { id } = req.params;
+  const { categoryId, title, description, price, salePrice, discountPercentage, stock, brand, rating, image } = req.body;
+
+  try {
+    const product = await Product.findById(id);
+    if (!product) {
+      return res.status(404).json({ message: "Product not found." });
+    }
+
+    // Check if the user is the seller or an admin
+    const userId = req.user?.id;
+    const userRole = req.user?.Role;
+
+    if (product.seller.toString() !== userId && userRole !== 'admin') {
+      return res.status(403).json({ message: "Unauthorized: You can only update your own product" });
+    }
+
+    // If categoryId is provided, update the category, else keep existing category
+    if (categoryId !== undefined) {
+      const categoryDoc = await Category.findById(categoryId) as { _id: Types.ObjectId } | null;
+
+      if (!categoryDoc) {
+        return res.status(400).json({ message: `Category with ID '${categoryId}' not found.` });
+      }
+      product.category = categoryDoc._id; // Set category to the new category ID
+    }
+
+    // Only update fields that are provided
+    if (title !== undefined) product.title = title;
+    if (description !== undefined) product.description = description;
+    if (stock !== undefined) product.stock = stock;
+    if (brand !== undefined) product.brand = brand;
+    if (rating !== undefined) product.rating = rating;
+
+    // Handle price and salePrice logic if provided
+    if (price !== undefined && price !== '') {
+      product.price = price;
+
+      // Calculate salePrice if discountPercentage is provided
+      if (discountPercentage !== undefined && discountPercentage !== '') {
+        product.discountPercentage = discountPercentage;
+        product.salePrice = price - (price * (discountPercentage / 100));
+      } 
+      // If salePrice is provided, calculate discountPercentage
+      else if (salePrice !== undefined && salePrice !== '') {
+        product.salePrice = salePrice;
+        product.discountPercentage = Math.round(((price - salePrice) / price) * 100);
+      } 
+      else {
+        // If neither salePrice nor discountPercentage is provided, set salePrice to price
+        product.salePrice = price;
+        product.discountPercentage = 0;
+      }
+    } 
+    // If salePrice is provided without price, calculate discountPercentage based on price
+    else if (salePrice !== undefined && salePrice !== '') {
+      product.salePrice = salePrice;
+      product.discountPercentage = Math.round(((product.price - salePrice) / product.price) * 100);
+    } 
+    // If discountPercentage is provided, calculate salePrice based on the existing price
+    else if (discountPercentage !== undefined && discountPercentage !== '') {
+      product.discountPercentage = discountPercentage;
+      product.salePrice = product.price - (product.price * (discountPercentage / 100));
+    }
+
+    // Handle image update (if image is provided)
+    if (req.file) {
+      // If a new image is uploaded, remove the old image
+      if (product.image) {
+        const oldImagePath = path.join(process.cwd(), product.image);
+        if (fs.existsSync(oldImagePath)) {
+          fs.unlinkSync(oldImagePath); // Remove the old image
+        }
+      }
+
+      // Update the image with the new one
+      const imageUrl = `/uploads/${req.file.filename}`;
+  product.image = imageUrl;
+} else if (typeof image === 'string') {
+  // If image is sent as a URL string in the body
+  product.image = image;
+}
+
+    // Save the updated product
+    await product.save();
+
+    return res.status(200).json({
+      message: "Product updated successfully.",
+      product,
+    });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ error: (error as Error).message });
+  }
+};
+
 
 const deleteProduct = async (req: AuthenticatedRequest, res: Response) => {
   const { _id } = req.params;

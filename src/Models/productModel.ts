@@ -7,7 +7,7 @@ export interface IProduct extends Document {
   price: number;
   rating: number;
   description?: string;
-  salePrice?: number;
+  salePrice: number;
   category:  mongoose.Types.ObjectId | { _id: string; name: string };
   brand?: string;
   stock?: number;
@@ -23,7 +23,7 @@ const ProductSchema: Schema<IProduct> = new Schema(
     },
     title: {
       type: String,
-      required: true,
+      // required: true,
       match: [/^[a-zA-Z0-9\s.,'-]{3,100}$/, "Please enter a valid title."],
     },
     description: {
@@ -45,7 +45,10 @@ const ProductSchema: Schema<IProduct> = new Schema(
     salePrice: {
       type: Number,
       min: [0, "Sale price must be a positive number."],
+      get: Math.floor,
+      set: Math.floor
     },
+  
     discountPercentage: {
       type: Number,
       min: [0, "Discount must be a positive number."],

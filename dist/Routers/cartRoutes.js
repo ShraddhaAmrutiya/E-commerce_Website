@@ -20,7 +20,7 @@ router.get('/count/:userId', async (req, res) => {
         return res.json({ count: 0 });
     // Get the number of products in the cart (length of the products array)
     const totalCount = cart.products.length;
-    console.log("cart productes", cart.products);
+    // console.log("cart productes",cart.products);
     return res.json({ count: totalCount });
 });
 exports.default = router;

@@ -33,7 +33,7 @@ const swaggerDefinition = {
     ...cartSwagger.paths,
     ...categorySwagger,
     ...productSwagger,
-    ...orderSwagger.paths,
+    ...orderSwagger,
     ...ChatboatSwagger.paths
   },
 };

@@ -63,8 +63,8 @@ const getCategoryById = async (
   const { id } = req.params;
   const { name, description } = req.body;
 
-  if (!name || !description) {
-    return res.status(400).json({ message: "Name and description are required." });
+  if (!name ) {
+    return res.status(400).json({ message: "Name is rquired." });
   }
 
   try {

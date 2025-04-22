@@ -20,6 +20,7 @@ export const getCart = async (req: Request, res: Response) => {
 
     const cartItems = cart.products;
     const cartCount = cartItems.reduce((total, item) => total + (item.quantity || 0), 0);
+console.log(cartItems);
 
 
     return res.status(200).json({ cartItems, cartCount });
@@ -31,6 +32,46 @@ export const getCart = async (req: Request, res: Response) => {
 
 
 
+// export const getCart = async (req: Request, res: Response) => {
+//   try {
+//     const { userId } = req.params;
+
+//     if (!mongoose.Types.ObjectId.isValid(userId)) {
+//       return res.status(400).json({ message: "Invalid user ID format" });
+//     }
+
+//     const cart = await Cart.findOne({ userId: new mongoose.Types.ObjectId(userId) })
+//       .populate("products.productId");
+
+//     if (!cart) {
+//       return res.status(200).json({ cartItems: [], cartCount: 0, cartTotal: 0 });
+//     }
+
+//     const cartItems = cart.products.map((item) => {
+//       const product = item.productId as any; // assuming populated product object
+//       const salePrice = product?.salePrice || 0;
+//       const quantity = item.quantity || 0;
+
+//       return {
+//         productId: product._id,
+//         name: product.name,
+//         description: product.description,
+//         image: product.image,
+//         salePrice,
+//         quantity,
+//         totalPrice: salePrice * quantity,
+//       };
+//     });
+
+//     const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
+//     const cartTotal = cartItems.reduce((total, item) => total + item.totalPrice, 0);
+
+//     return res.status(200).json({ cartItems, cartCount, cartTotal });
+//   } catch (error) {
+//     console.error(" Backend Error:", error);
+//     return res.status(500).json({ error: (error as Error).message });
+//   }
+// };
 
 
 export const updateCart = async (req: Request, res: Response) => {
