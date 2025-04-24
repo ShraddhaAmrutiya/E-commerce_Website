@@ -68,14 +68,12 @@ export const placeOrderFromCart = async (req: Request, res: Response) => {
     }
 
     // Log the entire cart object and its products to inspect what is being populated
-    console.log('Cart:', cart);
 
     let totalPrice = 0;
     const products = cart.products.map((item) => {
       const product = item.productId as any;
 
       // Log the product object to inspect its structure
-      console.log('Product:', product);
 
       if (!product) {
         return res.status(400).json({ message: "Product details missing for cart item." });

@@ -93,7 +93,6 @@ const registerUser = async (req, res) => {
         await newUser.save();
         await new cartModel_1.default({ userId: newUser._id, products: [] }).save();
         const token = jsonwebtoken_1.default.sign({ id: newUser._id, tokenVersion: newUser.tokenVersion }, process.env.SECRET_KEY, { expiresIn: '1d' });
-        // ✅ Send expanded response for frontend auto-login
         res.status(201).json({
             success: true,
             message: "User registered successfully",
@@ -118,17 +117,11 @@ exports.registerUser = registerUser;
 exports.default = registerUser;
 const loginUser = async (req, res) => {
     const { userName, password } = req.body;
-    // Check if both fields are provided
     if (!userName || !password) {
         return res.status(400).json({ message: "Please fill in both username and password." });
     }
     try {
-        // Find the user by userName
         const user = await userModel_1.User.findOne({ userName });
-        // // Check if the user exists
-        // if (!user) {
-        //   return res.status(401).json({ message: "Please enter valid credentials...." });
-        // }
         // Compare the password
         const isMatch = await bcryptjs_1.default.compare(password, user.password);
         if (!isMatch || !user) {
@@ -140,20 +133,13 @@ const loginUser = async (req, res) => {
                 message: "JWT secrets are not defined in the environment variables.",
             });
         }
-        // Generate access token
-        // const accessToken = jwt.sign(
-        //   { id: user._id, tokenVersion: user.tokenVersion },
-        //   SECRET_KEY,
-        //   { expiresIn: "1h" }
-        // );
         const accessToken = jsonwebtoken_1.default.sign({ id: user._id, tokenVersion: user.tokenVersion }, process.env.SECRET_KEY, { expiresIn: '1d' });
-        // Respond with access token and user details
         return res.status(200).json({
             message: "User logged in successfully.",
             accessToken,
             userId: user._id,
-            userName: user.userName, // Ensure correct userName is sent back
-            Role: user.Role, // Ensure Role is sent back
+            userName: user.userName,
+            Role: user.Role,
         });
     }
     catch (error) {
@@ -162,33 +148,69 @@ const loginUser = async (req, res) => {
     }
 };
 exports.loginUser = loginUser;
+//  const forgotPassword = async (req: Request, res: Response) => {
+//     const { email } = req.body;
+//     if (!email) {
+//       return res.status(400).json({ message: "Email is required." });
+//     }
+//     try {
+//       const user = await User.findOne({ email });
+//       if (!user) {
+//         return res.status(404).json({ message: "Please enter a registered email ID." });
+//       }
+//       // const resetToken = jwt.sign({ id: user._id }, SECRET_KEY, { expiresIn: "15m" });
+//       const resetToken = jwt.sign(
+//         { id: user._id, tokenVersion: user.tokenVersion },
+//         process.env.SECRET_KEY!,
+//         { expiresIn: '1d' }
+//       );
+//             user.resetToken = resetToken;
+//       await user.save();
+//       const mailOptions = {
+//         from:'"Support Team" <process.env.EMAIL_USER>',
+//         to: email,
+//         subject: "Password Reset Request",
+//         text: `You requested a password reset. Use the following token to reset your password: ${resetToken}`,
+//         html: `<p>You requested a password reset.</p>
+//                <p>Use the following token to reset your password:</p> 
+//                <p><strong>${resetToken}</strong></p>`,
+//       };
+//       await transporter.sendMail(mailOptions);
+//       return res.status(200).json({ message: "Reset token sent to email." });
+//     } catch (error) {
+//       console.log(error);
+//       return res.status(500).json({ message: "Server error", error: (error as Error).message });
+//     }
+//   };
 const forgotPassword = async (req, res) => {
     const { email } = req.body;
+    // Ensure email is provided
     if (!email) {
         return res.status(400).json({ message: "Email is required." });
     }
     try {
         const user = await userModel_1.User.findOne({ email });
         if (!user) {
-            return res.status(404).json({ message: "User not found." });
+            return res.status(404).json({ message: "Please enter a registered email ID." });
         }
-        // const resetToken = jwt.sign({ id: user._id }, SECRET_KEY, { expiresIn: "15m" });
+        // Generate reset token for password reset
         const resetToken = jsonwebtoken_1.default.sign({ id: user._id, tokenVersion: user.tokenVersion }, process.env.SECRET_KEY, { expiresIn: '1d' });
+        // Save the reset token (no password validation here)
         user.resetToken = resetToken;
-        await user.save();
+        await user.save({ validateModifiedOnly: true }); // Only save modified fields
+        const resetLink = `//http://localhost:5173//reset-password?token=${resetToken}`;
         const mailOptions = {
             from: '"Support Team" <process.env.EMAIL_USER>',
             to: email,
             subject: "Password Reset Request",
             text: `You requested a password reset. Use the following token to reset your password: ${resetToken}`,
-            html: `<p>You requested a password reset.</p>
-               <p>Use the following token to reset your password:</p> 
-               <p><strong>${resetToken}</strong></p>`,
+            html: `<p>You requested a password reset.</p><p>Use the following token to reset your password:</p><p>${resetLink}">Reset your password</a></p></p>`,
         };
         await transporter.sendMail(mailOptions);
         return res.status(200).json({ message: "Reset token sent to email." });
     }
     catch (error) {
+        console.log(error);
         return res.status(500).json({ message: "Server error", error: error.message });
     }
 };
@@ -225,7 +247,8 @@ const resetPasswordWithOldPassword = async (req, res) => {
 };
 exports.resetPasswordWithOldPassword = resetPasswordWithOldPassword;
 const resetPassword = async (req, res) => {
-    const { resetToken, newPassword } = req.body;
+    const { resetToken } = req.query;
+    const { newPassword } = req.body;
     if (!resetToken || !newPassword) {
         return res.status(400).json({ message: "Reset token and new password are required." });
     }

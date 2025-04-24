@@ -16,7 +16,7 @@ const CategorySchema: Schema<ICategory> = new Schema(
     description: {
       type: String,
       match: [
-        /^[a-zA-Z0-9\s.,'-]{5,1000}$/,
+        /^[a-zA-Z0-9\s.,'-]{1,1000}$/,
         "Please enter a valid description.",
       ],
     },

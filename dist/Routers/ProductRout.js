@@ -11,9 +11,7 @@ const multer_1 = __importDefault(require("multer"));
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const router = express_1.default.Router();
-// Define the upload directory (outside `dist`)
 const uploadDir = path_1.default.join(process.cwd(), "uploads");
-// Ensure `uploads/` directory exists in the root folder
 if (!fs_1.default.existsSync(uploadDir)) {
     fs_1.default.mkdirSync(uploadDir, { recursive: true });
     console.log(`Uploads folder created at: ${uploadDir}`);
@@ -23,7 +21,7 @@ else {
 }
 const storage = multer_1.default.diskStorage({
     destination: (req, file, cb) => {
-        cb(null, uploadDir); // Always save to root uploads folder
+        cb(null, uploadDir);
     },
     filename: (req, file, cb) => {
         cb(null, Date.now() + "-" + file.originalname);
@@ -34,7 +32,7 @@ router.post("/create", authMiddlewate_1.default, upload.single("image"), product
 router.get('/all', productController_1.readProduct);
 router.get('/search', productController_1.search);
 // router.put('/update/:id', upload.single("image"), updateProduct);
-router.put("/update/:id", authMiddlewate_1.default, (0, admin_1.default)(['admin']), upload.single("image"), productController_1.updateProduct);
+router.put("/update/:id", authMiddlewate_1.default, (0, admin_1.default)(['admin', 'seller']), upload.single("image"), productController_1.updateProduct);
 router.delete('/delete/:_id', authMiddlewate_1.default, productController_1.deleteProduct);
 router.get('/:_id', productController_1.getProductById);
 router.get("/category/:categoryname", productController_1.getproductBYCategoryname);

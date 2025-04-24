@@ -10,7 +10,7 @@ export interface IUser extends Document {
   age?: number;
   gender?: string;
   Role: string;
-  password: string;
+  password?: string;
   resetToken?: string;
   tokenVersion: number;
   matchPassword(password: string): Promise<boolean>;
@@ -46,7 +46,7 @@ const UserSchema = new Schema<IUser>({
     Role: { type: String, enum: ["customer", "seller", "admin"], default: "customer" },
     password: {
     type: String,
-    required: [true, "Password is required"],
+    // required: [true, "Password is required"],
     match: [/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^.-=+<>?&*()]).{8,15}$/, "password length must be 8"],
   },
   resetToken: { type: String },

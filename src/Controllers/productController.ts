@@ -554,7 +554,6 @@ const updateProduct = async (req: AuthenticatedRequest, res: Response) => {
       product,
     });
   } catch (error) {
-    console.log(error);
     return res.status(500).json({ error: (error as Error).message });
   }
 };
@@ -570,8 +569,6 @@ const deleteProduct = async (req: AuthenticatedRequest, res: Response) => {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    console.log("Product Seller:", product.seller);
-    console.log("User ID from Token:", req.user.id);
 
     // Check if logged-in user is the seller
     if (product.seller.toString() !== req.user.id && req.user.Role !== 'admin') {

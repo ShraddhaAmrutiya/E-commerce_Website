@@ -9,9 +9,7 @@ import path from 'path';
 const router = express.Router();
 
 
-// Define the upload directory (outside `dist`)
 const uploadDir = path.join(process.cwd(), "uploads");
-// Ensure `uploads/` directory exists in the root folder
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
   console.log(`Uploads folder created at: ${uploadDir}`);
@@ -22,7 +20,7 @@ if (!fs.existsSync(uploadDir)) {
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, uploadDir); // Always save to root uploads folder
+    cb(null, uploadDir);
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + "-" + file.originalname);
@@ -36,7 +34,7 @@ router.get('/all',readProduct);
 router.get('/search',search);
 
 // router.put('/update/:id', upload.single("image"), updateProduct);
-router.put("/update/:id", authMiddleware, checkRole(['admin']), upload.single("image"), updateProduct);
+router.put("/update/:id", authMiddleware, checkRole(['admin','seller']), upload.single("image"), updateProduct);
 
 router.delete('/delete/:_id',authMiddleware, deleteProduct);
 router.get('/:_id', getProductById);

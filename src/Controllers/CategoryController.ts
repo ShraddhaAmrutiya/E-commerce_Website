@@ -17,6 +17,11 @@ const createCategory = async (
   }
 
   try {
+
+    const existingCategory = await Category.findOne({ name: { $regex: new RegExp(`^${name}$`, 'i') } });
+    if (existingCategory) {
+      return res.status(409).json({ message: "Category already exists." });
+    }
     const newCategory = new Category({ name, description });
     await newCategory.save();
     return res.status(201).json({

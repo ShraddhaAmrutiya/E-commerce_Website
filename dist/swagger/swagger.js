@@ -10,6 +10,7 @@ const authSwagger_1 = require("./authSwagger");
 const categorySwagger_1 = require("./categorySwagger");
 const orderSwagger_1 = require("./orderSwagger");
 const chatboatswagger_1 = require("./chatboatswagger");
+const wishlistSwagger_1 = require("./wishlistSwagger");
 const swaggerDefinition = {
     openapi: '3.0.0',
     info: {
@@ -36,6 +37,7 @@ const swaggerDefinition = {
         ...categorySwagger_1.categorySwagger,
         ...productSwagger_1.productSwagger,
         ...orderSwagger_1.orderSwagger,
+        ...wishlistSwagger_1.WishlistSwagger.paths,
         ...chatboatswagger_1.ChatboatSwagger.paths
     },
 };
@@ -46,7 +48,8 @@ const options = {
         './dist/Routers/CategoryRoutes.js',
         './dist/Routers/ProductRout.js',
         './dist/Routers/cartRoutes.js',
-        './dist/Routers/OrderController.js'
+        './dist/Routers/OrderController.js',
+        './dist/Routers/wishlistControllers.js'
     ],
 };
 const swaggerSpec = (0, swagger_jsdoc_1.default)(options);

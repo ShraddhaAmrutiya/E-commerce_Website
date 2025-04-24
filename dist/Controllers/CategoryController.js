@@ -9,6 +9,10 @@ const createCategory = async (req, res) => {
         return res.status(400).json({ message: "Category name is required." });
     }
     try {
+        const existingCategory = await categoryModel_1.Category.findOne({ name: { $regex: new RegExp(`^${name}$`, 'i') } });
+        if (existingCategory) {
+            return res.status(409).json({ message: "Category already exists." });
+        }
         const newCategory = new categoryModel_1.Category({ name, description });
         await newCategory.save();
         return res.status(201).json({

@@ -442,7 +442,6 @@ const updateProduct = async (req, res) => {
         });
     }
     catch (error) {
-        console.log(error);
         return res.status(500).json({ error: error.message });
     }
 };
@@ -454,8 +453,6 @@ const deleteProduct = async (req, res) => {
         if (!product) {
             return res.status(404).json({ message: "Product not found" });
         }
-        console.log("Product Seller:", product.seller);
-        console.log("User ID from Token:", req.user.id);
         // Check if logged-in user is the seller
         if (product.seller.toString() !== req.user.id && req.user.Role !== 'admin') {
             return res.status(403).json({ message: "Unauthorized: You can only update your own product" });
