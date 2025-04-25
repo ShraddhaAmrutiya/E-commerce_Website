@@ -43,11 +43,11 @@ const UserSchema = new Schema<IUser>({
     max: [100, "Age must be less than or equal to 100"],
   },
   gender: { type: String },
-    Role: { type: String, enum: ["customer", "seller", "admin"], default: "customer" },
-    password: {
+  Role: { type: String, enum: ["customer", "seller", "admin"], default: "customer" },
+  password: {
     type: String,
     // required: [true, "Password is required"],
-    match: [/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^.-=+<>?&*()]).{8,15}$/, "password length must be 8"],
+    match: [/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^.-=+<>?&*()]).{8,15}$/, "Password must be at least 8 characters and include upper, lower, number and special character"],
   },
   resetToken: { type: String },
   tokenVersion: { type: Number, default: 0 },

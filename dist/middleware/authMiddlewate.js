@@ -15,7 +15,7 @@ const authMiddleware = async (req, res, next) => {
         const decoded = jsonwebtoken_1.default.verify(token, process.env.SECRET_KEY);
         const user = await userModel_1.User.findById(decoded.id).select('-password');
         if (!user) {
-            return res.status(404).json({ message: "User not found" });
+            return res.status(404).json({ message: "User not found..." });
         }
         if (user.tokenVersion !== decoded.tokenVersion) {
             return res.status(401).json({ message: "Invalid token. Please log in again." });

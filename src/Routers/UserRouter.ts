@@ -14,7 +14,9 @@ router.post('/login', loginUser);
 
 router.post('/forgot-password', forgotPassword);
 
-router.post('/reset-password/', resetPassword);
+router.post('/reset-password/:token', resetPassword);
+
+
 router.post('/reset-passwordwitholdpassword/', resetPasswordWithOldPassword);
 
 router.post('/logout', logoutUser);

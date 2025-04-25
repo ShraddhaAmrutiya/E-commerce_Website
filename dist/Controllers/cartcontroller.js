@@ -14,8 +14,7 @@ const getCart = async (req, res) => {
         if (!mongoose_1.default.Types.ObjectId.isValid(userId)) {
             return res.status(400).json({ message: "Invalid user ID format" });
         }
-        const cart = await cartModel_1.default.findOne({ userId: new mongoose_1.default.Types.ObjectId(userId) })
-            .populate("products.productId");
+        const cart = await cartModel_1.default.findOne({ userId: new mongoose_1.default.Types.ObjectId(userId) }).populate("products.productId");
         if (!cart) {
             return res.status(200).json({ cartItems: [], cartCount: 0 });
         }
@@ -79,11 +78,10 @@ const removeFromCart = async (req, res) => {
         const { userId, productId } = req.body;
         const productObjectId = new mongoose_1.default.Types.ObjectId(productId);
         const userObjectId = new mongoose_1.default.Types.ObjectId(userId);
-        let cart = await cartModel_1.default.findOne({ userId: userObjectId })
-            .populate({
+        let cart = await cartModel_1.default.findOne({ userId: userObjectId }).populate({
             path: "products.productId",
             model: "Product", // Ensure it explicitly refers to the Product model
-            select: "title"
+            select: "title",
         });
         if (!cart) {
             return res.status(400).json({ message: "Cart not found" });
@@ -124,11 +122,11 @@ exports.clearCart = clearCart;
 const increaseQuantity = async (req, res) => {
     const { userId, productId } = req.body;
     if (!userId || !productId)
-        return res.status(400).json({ message: 'Missing parameters' });
+        return res.status(400).json({ message: "Missing parameters" });
     try {
         const cart = await cartModel_1.default.findOne({ userId });
         if (!cart)
-            return res.status(404).json({ message: 'Cart not found' });
+            return res.status(404).json({ message: "Cart not found" });
         const item = cart.products.find((item) => item.productId.toString() === productId);
         if (item) {
             item.quantity += 1;
@@ -137,22 +135,22 @@ const increaseQuantity = async (req, res) => {
             cart.products.push({ productId, quantity: 1 });
         }
         await cart.save();
-        res.status(200).json({ message: 'Quantity increased', cartItems: cart.products });
+        res.status(200).json({ message: "Quantity increased", cartItems: cart.products });
     }
     catch (error) {
-        console.error('Increase error:', error);
-        res.status(500).json({ message: 'Server error' });
+        console.error("Increase error:", error);
+        res.status(500).json({ message: "Server error" });
     }
 };
 exports.increaseQuantity = increaseQuantity;
 const decreaseQuantity = async (req, res) => {
     const { userId, productId } = req.body;
     if (!userId || !productId)
-        return res.status(400).json({ message: 'Missing parameters' });
+        return res.status(400).json({ message: "Missing parameters" });
     try {
         const cart = await cartModel_1.default.findOne({ userId });
         if (!cart)
-            return res.status(404).json({ message: 'Cart not found' });
+            return res.status(404).json({ message: "Cart not found" });
         const item = cart.products.find((item) => item.productId.toString() === productId);
         if (item) {
             if (item.quantity > 1) {
@@ -162,15 +160,15 @@ const decreaseQuantity = async (req, res) => {
                 cart.products = cart.products.filter((item) => item.productId.toString() !== productId);
             }
             await cart.save();
-            res.status(200).json({ message: 'Quantity decreased', cartItems: cart.products });
+            res.status(200).json({ message: "Quantity decreased", cartItems: cart.products });
         }
         else {
-            res.status(404).json({ message: 'Item not found in cart' });
+            res.status(404).json({ message: "Item not found in cart" });
         }
     }
     catch (error) {
-        console.error('Decrease error:', error);
-        res.status(500).json({ message: 'Server error' });
+        console.error("Decrease error:", error);
+        res.status(500).json({ message: "Server error" });
     }
 };
 exports.decreaseQuantity = decreaseQuantity;

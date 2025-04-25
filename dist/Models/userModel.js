@@ -37,7 +37,7 @@ const UserSchema = new mongoose_1.Schema({
     password: {
         type: String,
         // required: [true, "Password is required"],
-        match: [/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^.-=+<>?&*()]).{8,15}$/, "password length must be 8"],
+        match: [/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^.-=+<>?&*()]).{8,15}$/, "Password must be at least 8 characters and include upper, lower, number and special character"],
     },
     resetToken: { type: String },
     tokenVersion: { type: Number, default: 0 },

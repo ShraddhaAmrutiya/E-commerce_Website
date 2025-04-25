@@ -38,63 +38,6 @@ export interface LoginRequestBody {
 }
 
 
-//add if you want to regiser andd ten it redirect to login
-// const registerUser = async (
-//   req: Request<{}, {}, RegisterRequestBody>,
-//   res: Response
-// ) => {
-//   const {
-//     userName,
-//     password,
-//     email,
-//     Role,
-//     firstName,
-//     lastName,
-//     phone,
-//     age,
-//     gender,
-//   } = req.body;
-
-//   if (!userName || !password || !email) {
-//     return res.status(400).send({ message: "Fill the required fields." });
-//   }
-
-//   try {
-//     const existingUser = await User.findOne({ email });
-//     if (existingUser) {
-//       return res.status(400).json({ message: "User already exists" });
-//     }
-
-//     const newUser = new User({
-//       userName,
-//       email,
-//       password,
-//       Role,
-//       firstName,
-//       lastName,
-//       phone,
-//       age,
-//       gender,
-//     });
-
-//     await newUser.save();
-
-//     await new Cart({ userId: newUser._id, products: [] }).save();
-
-//     res.status(201).json({
-//       success: true,  // Added success flag
-//       message: "User registered successfully",  // Confirmation message
-//       _id: newUser._id,
-//       userName: newUser.userName,
-//     });
-//   } catch (error) {
-//     res.status(500).send({ error: (error as Error).message });
-//   }
-// };
-
-//use this if you want to direct login autometic after register
-
-
 const registerUser = async (
   req: Request<{}, {}, RegisterRequestBody>,
   res: Response
@@ -211,48 +154,6 @@ const loginUser = async (req: Request, res: Response): Promise<Response> => {
 };
 
 
-//  const forgotPassword = async (req: Request, res: Response) => {
-//     const { email } = req.body;
-  
-//     if (!email) {
-//       return res.status(400).json({ message: "Email is required." });
-//     }
-  
-//     try {
-//       const user = await User.findOne({ email });
-//       if (!user) {
-//         return res.status(404).json({ message: "Please enter a registered email ID." });
-//       }
-  
-//       // const resetToken = jwt.sign({ id: user._id }, SECRET_KEY, { expiresIn: "15m" });
-//       const resetToken = jwt.sign(
-//         { id: user._id, tokenVersion: user.tokenVersion },
-//         process.env.SECRET_KEY!,
-//         { expiresIn: '1d' }
-//       );
-//             user.resetToken = resetToken;
-//       await user.save();
-  
-//       const mailOptions = {
-//         from:'"Support Team" <process.env.EMAIL_USER>',
-//         to: email,
-//         subject: "Password Reset Request",
-//         text: `You requested a password reset. Use the following token to reset your password: ${resetToken}`,
-//         html: `<p>You requested a password reset.</p>
-//                <p>Use the following token to reset your password:</p> 
-//                <p><strong>${resetToken}</strong></p>`,
-//       };
-  
-//       await transporter.sendMail(mailOptions);
-  
-//       return res.status(200).json({ message: "Reset token sent to email." });
-//     } catch (error) {
-//       console.log(error);
-      
-//       return res.status(500).json({ message: "Server error", error: (error as Error).message });
-//     }
-//   };
-
 const forgotPassword = async (req: Request, res: Response) => {
   const { email } = req.body;
 
@@ -268,18 +169,16 @@ const forgotPassword = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Please enter a registered email ID." });
     }
 
-    // Generate reset token for password reset
     const resetToken = jwt.sign(
       { id: user._id, tokenVersion: user.tokenVersion },
       process.env.SECRET_KEY!,
       { expiresIn: '1d' }
     );
 
-    // Save the reset token (no password validation here)
     user.resetToken = resetToken;
-    await user.save({ validateModifiedOnly: true });  // Only save modified fields
+    await user.save({ validateModifiedOnly: true });  
 
-    const resetLink = `//http://localhost:5173//reset-password?token=${resetToken}`;
+    const resetLink = `http://localhost:5173/reset-password/${resetToken}`;
 
     const mailOptions = {
       from: '"Support Team" <process.env.EMAIL_USER>',
@@ -298,61 +197,21 @@ const forgotPassword = async (req: Request, res: Response) => {
   }
 };
 
-
-  const resetPasswordWithOldPassword = async (req: Request, res: Response) => {
-    const { userName , oldPassword, newPassword } = req.body;
-
-    if (!userName  || !oldPassword || !newPassword) {
-        return res.status(400).json({ message: "All fields are required." });
-    }
-
-    try {
-        const user = await User.findOne({ userName  });
-
-        if (!user) {
-            return res.status(404).json({ message: "User not found." });
-        }
-
-        const isMatch = await bcrypt.compare(oldPassword, user.password);
-
-        if (!isMatch) {
-            return res.status(401).json({ message: "Incorrect old password." });
-        }
-
-        const saltRounds = 10;
-        const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
-
-        user.password = hashedPassword;
-
-        if (typeof user.tokenVersion === "number") {
-            user.tokenVersion += 1;
-        } else {
-            user.tokenVersion = 1; 
-        }
-
-        await user.save();
-
-        return res.status(200).json({ message: "Password updated successfully." });
-    } catch (error) {
-        return res.status(500).json({ message: "Server error", error: (error as Error).message });
-    }
-};
-
-  
 const resetPassword = async (req: Request, res: Response) => {
-  const{resetToken}=req.query;
+
+  const {  token } = req.params;
   const {  newPassword } = req.body;
 
-  if (!resetToken || !newPassword) {
+  if (!token || !newPassword) {
     return res.status(400).json({ message: "Reset token and new password are required." });
   }
 
   try {
-    const decoded: any = jwt.verify(resetToken as string, SECRET_KEY);
+    const decoded: any = jwt.verify(token, SECRET_KEY);
     const userId = decoded.id;
 
     const user = await User.findById(userId);
-    if (!user || user.resetToken !== resetToken) {
+    if (!user || user.resetToken !== token) {
       return res.status(401).json({ message: "Invalid or expired reset token." });
     }
 
@@ -364,6 +223,52 @@ const resetPassword = async (req: Request, res: Response) => {
     return res.status(200).json({ message: "Password reset successfully. Please log in again." });
   } catch (error) {
     return res.status(500).json({ message: "Server error", error: (error as Error).message });
+  }
+};
+
+
+
+const resetPasswordWithOldPassword = async (req: Request, res: Response) => {
+  const { userName, oldPassword, newPassword } = req.body;
+
+  if (!userName || !oldPassword || !newPassword) {
+    return res.status(400).json({ message: "All fields are required." });
+  }
+
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^.-=+<>?&*()]).{8,15}$/;
+  if (!passwordRegex.test(newPassword)) {
+    return res.status(400).json({
+      message: "Password must be 8-15 characters and include at least one uppercase letter, one lowercase letter, one number, and one special character.",
+    });
+  }
+
+  try {
+    const user = await User.findOne({ userName });
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found." });
+    }
+
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+
+    if (!isMatch) {
+      return res.status(401).json({ message: "Incorrect old password." });
+    }
+
+    user.password = newPassword;  
+
+    user.tokenVersion += 1;
+
+    await user.save();
+    const newAccessToken = jwt.sign({ id: user._id,tokenVersion: user.tokenVersion,  }, process.env.SECRET_KEY, { expiresIn: '1h' });
+
+
+    return res.status(200).json({ message: "Password updated successfully." , 
+      token: newAccessToken,
+    });
+  } catch (error) {
+    console.error("Error updating password:", error);
+    return res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
@@ -402,7 +307,6 @@ const checkAuthStatus = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "User not found." });
     }
 
-    // Send user data as a response
     return res.status(200).json({
       userName: user.userName,
       userId: user._id,
