@@ -54,7 +54,7 @@ export const getWishlist = async (req: Request, res: Response) => {
 
     // Fetch the wishlist for the user and populate the productId within the products array
     const wishlist = await Wishlist.find({ userId })
-      .populate('products.productId', 'title price image')  // Populate productId inside the products array
+      .populate('products.productId', 'title price salePrice image')  // Populate productId inside the products array
       .exec();
 
     // If no wishlist items, return a message

@@ -5,54 +5,12 @@ import { Product } from "../Models/productModel";
 import { User } from "../Models/userModel";
 import mongoose from "mongoose";
 
-// export const placeOrderFromCart = async (req: Request, res: Response) => {
-//   try {
-//     const { userId } = req.params;
 
-//     const cart = await Cart.findOne({ userId }).populate("products.productId");
-//     if (!cart || cart.products.length === 0) {
-//       return res.status(400).json({ message: "Cart is empty" });
-//     }
-
-//     let totalPrice = 0;
-//     const products = cart.products.map((item) => {
-//       const product = item.productId as any;
-//       totalPrice += product.price * item.quantity;
-//       return {
-//         productId: product._id,
-//         stock: item.quantity,
-//       };
-//     });
-
-//     const newOrder = new Order({
-//       userId: new mongoose.Types.ObjectId(userId),
-//       products,
-//       totalPrice,
-//       status: "Pending",
-//     });
-
-//     await newOrder.save();
-
-//     for (const item of cart.products) {
-//       const product = item.productId as any;
-//       await Product.findByIdAndUpdate(product._id, {
-//         $inc: { stock: -item.quantity },
-//       });
-//     }
-
-//     await Cart.findOneAndDelete({ userId });
-
-//     return res.status(201).json({ message: "Order placed successfully", order: newOrder });
-//   } catch (error) {
-//     return res.status(500).json({ error: (error as Error).message });
-//   }
-// };
 
 export const placeOrderFromCart = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
 
-    // Check if userId is valid
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       return res.status(400).json({ message: "Invalid user ID" });
     }
@@ -132,38 +90,55 @@ if (product.stock == null || product.stock < item.quantity) {
 };
 
 
-// Place Direct Order (Without Adding to Cart)
 export const placeDirectOrder = async (req: Request, res: Response) => {
   try {
     const { userId, productId, quantity } = req.body;
 
-  
+    // Validate input
+    if (!userId || !productId || !quantity || quantity <= 0) {
+      return res.status(400).json({ message: "Invalid input data" });
+    }
+
+    // Check if user exists
     const user = await User.findById(userId);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
 
+    // Fetch the product
     const product = await Product.findById(productId);
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
     }
 
-  
+    // Check stock availability
+    if (product.stock === 0) {
+      return res.status(400).json({ message: "Product is out of stock" });
+    }
 
+    if (product.stock < quantity) {
+      return res.status(400).json({ message: `Not enough stock for product: ${product.title}` });
+    }
+
+    // Calculate total price
     const totalPrice = product.salePrice * quantity;
 
+    // Create new order
     const newOrder = new Order({
       userId: new mongoose.Types.ObjectId(userId),
-      products: [{ productId: new mongoose.Types.ObjectId(productId), quantity: quantity }], // 🔹 Fix: Use `quantity`
+      products: [
+        { productId: new mongoose.Types.ObjectId(productId), quantity }
+      ],
       totalPrice,
       status: "Pending",
     });
 
     await newOrder.save();
 
-    // await Product.findByIdAndUpdate(productId, {
-    //   $inc: { stock: -stock },
-    // });
+    // Deduct stock
+    await Product.findByIdAndUpdate(productId, {
+      $inc: { stock: -quantity },
+    });
 
     return res.status(201).json({ message: "Direct order placed successfully", order: newOrder });
   } catch (error) {
@@ -171,6 +146,7 @@ export const placeDirectOrder = async (req: Request, res: Response) => {
     return res.status(500).json({ error: (error as Error).message });
   }
 };
+
 
 export const getOrdersByUser = async (req: Request, res: Response) => {
   try {
