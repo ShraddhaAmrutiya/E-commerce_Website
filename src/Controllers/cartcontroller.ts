@@ -3,7 +3,7 @@ import Cart from "../Models/cartModel";
 import mongoose from "mongoose";
 import dotenv from "dotenv";
 dotenv.config();
-
+import { Product } from "../Models/productModel";
 export const getCart = async (req: Request, res: Response) => {
   try {
     const { userId } = req.params;
@@ -79,6 +79,46 @@ export const updateCart = async (req: Request, res: Response) => {
   }
 };
 
+// export const removeFromCart = async (req: Request, res: Response) => {
+//   try {
+//     const { userId, productId } = req.body;
+
+//     const productObjectId = new mongoose.Types.ObjectId(productId);
+//     const userObjectId = new mongoose.Types.ObjectId(userId);
+
+//     let cart = await Cart.findOne({ userId: userObjectId }).populate({
+//       path: "products.productId",
+//       model: "Product", // Ensure it explicitly refers to the Product model
+//       select: "title",
+//     });
+//     if (!cart) {
+//       return res.status(400).json({ message: "Cart not found" });
+//     }
+
+//     const productToRemove = cart.products.find((p) => p.productId.equals(productObjectId));
+
+//     if (!productToRemove) {
+//       return res.status(404).json({ message: "Product not found in cart" });
+//     }
+
+//     // Get product name correctly
+//     const removedProductName = (productToRemove.productId as any)?.title || "Unknown Product";
+
+//     cart.products = cart.products.filter((p) => !p.productId.equals(productObjectId));
+//     await cart.save();
+
+//     return res.status(200).json({
+//       message: ` ${removedProductName} removed from cart`,
+//     });
+//   } catch (error) {
+//     console.error("Error removing product from cart:", error);
+//     return res.status(500).json({ error: (error as Error).message });
+//   }
+// };
+
+
+
+
 export const removeFromCart = async (req: Request, res: Response) => {
   try {
     const { userId, productId } = req.body;
@@ -88,9 +128,10 @@ export const removeFromCart = async (req: Request, res: Response) => {
 
     let cart = await Cart.findOne({ userId: userObjectId }).populate({
       path: "products.productId",
-      model: "Product", // Ensure it explicitly refers to the Product model
-      select: "title",
+      model: "Product", // Ensure it refers to the Product model
+      select: "title", // Select only the necessary fields (title in this case)
     });
+
     if (!cart) {
       return res.status(400).json({ message: "Cart not found" });
     }
@@ -101,20 +142,21 @@ export const removeFromCart = async (req: Request, res: Response) => {
       return res.status(404).json({ message: "Product not found in cart" });
     }
 
-    // Get product name correctly
+    // After populating, you can safely access the `title` of the product
     const removedProductName = (productToRemove.productId as any)?.title || "Unknown Product";
 
     cart.products = cart.products.filter((p) => !p.productId.equals(productObjectId));
     await cart.save();
 
     return res.status(200).json({
-      message: ` ${removedProductName} removed from cart`,
+      message: `${removedProductName} removed from cart`,
     });
   } catch (error) {
     console.error("Error removing product from cart:", error);
     return res.status(500).json({ error: (error as Error).message });
   }
 };
+
 
 export const clearCart = async (req: Request, res: Response) => {
   try {

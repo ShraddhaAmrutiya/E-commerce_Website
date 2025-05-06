@@ -10,6 +10,8 @@ const dotenv_1 = __importDefault(require("dotenv"));
 const nodemailer_1 = __importDefault(require("nodemailer"));
 const cartModel_1 = __importDefault(require("../Models/cartModel"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
+const google_auth_library_1 = require("google-auth-library");
+const client = new google_auth_library_1.OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 dotenv_1.default.config();
 const SECRET_KEY = process.env.SECRET_KEY;
 const transporter = nodemailer_1.default.createTransport({
@@ -219,7 +221,7 @@ const getAllUsers = async (req, res) => {
 exports.getAllUsers = getAllUsers;
 const checkAuthStatus = async (req, res) => {
     try {
-        const user = await userModel_1.User.findById(req.user.id).select("-password"); // Fetch user excluding the password
+        const user = await userModel_1.User.findById(req.user.id).select("-password");
         if (!user) {
             return res.status(404).json({ message: "User not found." });
         }

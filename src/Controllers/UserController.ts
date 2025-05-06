@@ -5,6 +5,9 @@ import dotenv from "dotenv";
 import nodemailer from "nodemailer";
 import Cart from "../Models/cartModel"
 import bcrypt from 'bcryptjs'; 
+import { OAuth2Client } from "google-auth-library";
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID!);
+
 
 
 dotenv.config();
@@ -302,7 +305,7 @@ const getAllUsers = async (req: Request, res: Response) => {
 
 const checkAuthStatus = async (req: Request, res: Response) => {
   try {
-    const user = await User.findById(req.user.id).select("-password"); // Fetch user excluding the password
+    const user = await User.findById(req.user.id).select("-password"); 
     if (!user) {
       return res.status(404).json({ message: "User not found." });
     }
