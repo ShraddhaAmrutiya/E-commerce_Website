@@ -42,14 +42,14 @@ const UserSchema = new mongoose_1.Schema({
     resetToken: { type: String },
     tokenVersion: { type: Number, default: 0 },
 });
-// ✅ Hash password before save
+//  Hash password before save
 UserSchema.pre("save", async function (next) {
     if (!this.isModified("password"))
         return next();
     this.password = await bcryptjs_1.default.hash(this.password, 10);
     next();
 });
-// ✅ Compare passwords
+//  Compare passwords
 UserSchema.methods.matchPassword = async function (password) {
     return await bcryptjs_1.default.compare(password, this.password);
 };

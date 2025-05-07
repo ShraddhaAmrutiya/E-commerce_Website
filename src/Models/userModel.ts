@@ -53,14 +53,14 @@ const UserSchema = new Schema<IUser>({
   tokenVersion: { type: Number, default: 0 },
 });
 
-// ✅ Hash password before save
+//  Hash password before save
 UserSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
   this.password = await bcrypt.hash(this.password, 10);
   next();
 });
 
-// ✅ Compare passwords
+//  Compare passwords
 UserSchema.methods.matchPassword = async function (password: string) {
   return await bcrypt.compare(password, this.password);
 };
