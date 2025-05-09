@@ -91,7 +91,7 @@ import mongoose, { Schema, Document, model } from "mongoose";
 export interface IProduct extends Document {
   _id: mongoose.Types.ObjectId;
   title: string;
-  image?: string;
+  images?: string[];
   price: number;
   rating: number;
   description?: string;
@@ -121,10 +121,11 @@ const ProductSchema: Schema<IProduct> = new Schema(
         "Please enter a valid description.",
       ],
     },
-    image: {
+    images: [{
       type: String,
-      match: [/\.(jpg|jpeg|png)$/i, "Image must be a .jpg, .jpeg, or .png file."],
-    },
+      match: [/\.(jpg|jpeg|png)$/i, "Each image must be a .jpg, .jpeg, or .png file."],
+    }],
+    
     price: {
       type: Number,
       required: true,

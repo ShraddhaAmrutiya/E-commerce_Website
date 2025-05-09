@@ -123,10 +123,10 @@ const ProductSchema = new mongoose_1.Schema({
             "Please enter a valid description.",
         ],
     },
-    image: {
-        type: String,
-        match: [/\.(jpg|jpeg|png)$/i, "Image must be a .jpg, .jpeg, or .png file."],
-    },
+    images: [{
+            type: String,
+            match: [/\.(jpg|jpeg|png)$/i, "Each image must be a .jpg, .jpeg, or .png file."],
+        }],
     price: {
         type: Number,
         required: true,

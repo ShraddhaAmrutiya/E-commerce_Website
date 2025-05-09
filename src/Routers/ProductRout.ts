@@ -28,7 +28,10 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-router.post("/create",authMiddleware, upload.single("image"),createProduct);
+// router.post("/create",authMiddleware, checkRole(['admin','seller']),upload.single("image"),createProduct);
+router.post("/create", authMiddleware, checkRole(['admin', 'seller']),upload.fields([{ name: "image", maxCount: 5 }])
+
+, createProduct);
 
 router.get('/all',readProduct);
 router.get('/search',search);
@@ -36,7 +39,7 @@ router.get('/search',search);
 // router.put('/update/:id', upload.single("image"), updateProduct);
 router.put("/update/:id", authMiddleware, checkRole(['admin','seller']), upload.single("image"), updateProduct);
 
-router.delete('/delete/:_id',authMiddleware, deleteProduct);
+router.delete('/delete/:_id',authMiddleware,checkRole(['admin','seller']), deleteProduct);
 router.get('/:_id', getProductById);
 
 router.get("/category/:categoryname",getproductBYCategoryname);

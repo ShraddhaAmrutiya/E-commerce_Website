@@ -209,7 +209,7 @@ export const getOrderRedirectButton = async (req: Request, res: Response) => {
               description: productDetails.description,
               salePrice: productDetails.salePrice,
               totalPrice,
-              image: productDetails.image,
+              image: productDetails.images,
             };
           })
         );

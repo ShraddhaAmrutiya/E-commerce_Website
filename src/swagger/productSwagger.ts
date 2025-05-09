@@ -1,7 +1,7 @@
 export const productSwagger = {
   "/products/create": {
     post: {
-      summary: "Create a product",
+      summary: "Create a new product",
       tags: ["Products"],
       security: [{ bearerAuth: [] }],
       requestBody: {
@@ -20,7 +20,10 @@ export const productSwagger = {
                 stock: { type: "integer", example: 50 },
                 brand: { type: "string", example: "Apple" },
                 rating: { type: "number", example: 4.5 },
-                image: { type: "string", format: "binary" },
+                image: {
+                  type: "array",
+                  items: { type: "string", format: "binary" },
+                },
               },
               required: ["category", "title", "price"],
             },
@@ -29,25 +32,35 @@ export const productSwagger = {
       },
       responses: {
         201: { description: "Product created successfully" },
-        400: { description: "Missing required fields" },
-        500: { description: "Server error" },
+        400: { description: "Bad request - missing required fields or invalid data" },
+        500: { description: "Internal server error" },
       },
     },
   },
+
   "/products/all": {
     get: {
-      summary: "Get all products",
+      summary: "Retrieve all products grouped by category",
       tags: ["Products"],
       security: [{ bearerAuth: [] }],
+      parameters: [
+        {
+          name: "limit",
+          in: "query",
+          required: false,
+          schema: { type: "integer", default: 10 },
+        },
+      ],
       responses: {
         200: { description: "List of products" },
-        500: { description: "Server error" },
+        500: { description: "Internal server error" },
       },
     },
   },
+
   "/products/update/{id}": {
     put: {
-      summary: "Update a product",
+      summary: "Update a product by ID",
       tags: ["Products"],
       security: [{ bearerAuth: [] }],
       parameters: [
@@ -65,15 +78,15 @@ export const productSwagger = {
             schema: {
               type: "object",
               properties: {
-                category: { type: "string", example: "Electronics" },
-                title: { type: "string", example: "Smartphone" },
-                description: { type: "string", example: "Updated model" },
-                price: { type: "number", example: 999.99 },
-                salePrice: { type: "number", example: 899.99 },
+                categoryId: { type: "string", example: "65c12345678" },
+                title: { type: "string", example: "Updated Smartphone" },
+                description: { type: "string", example: "Now with more features" },
+                price: { type: "number", example: 1099.99 },
+                salePrice: { type: "number", example: 999.99 },
                 discountPercentage: { type: "number", example: 10 },
-                stock: { type: "integer", example: 50 },
+                stock: { type: "integer", example: 45 },
                 brand: { type: "string", example: "Samsung" },
-                rating: { type: "number", example: 4.2 },
+                rating: { type: "number", example: 4.6 },
                 image: { type: "string", format: "binary" },
               },
             },
@@ -82,14 +95,16 @@ export const productSwagger = {
       },
       responses: {
         200: { description: "Product updated successfully" },
+        403: { description: "Unauthorized to update this product" },
         404: { description: "Product not found" },
-        500: { description: "Server error" },
+        500: { description: "Internal server error" },
       },
     },
   },
+
   "/products/delete/{id}": {
     delete: {
-      summary: "Delete a product",
+      summary: "Delete a product by ID",
       tags: ["Products"],
       security: [{ bearerAuth: [] }],
       parameters: [
@@ -102,15 +117,16 @@ export const productSwagger = {
       ],
       responses: {
         200: { description: "Product deleted successfully" },
+        403: { description: "Unauthorized to delete this product" },
         404: { description: "Product not found" },
-        500: { description: "Server error" },
+        500: { description: "Internal server error" },
       },
     },
   },
+
   "/category/products/{id}": {
     get: {
-      summary: "Get products by category name",
-      description: "Fetch all products that belong to a specific category.",
+      summary: "Get products by category ID",
       tags: ["Category"],
       security: [{ bearerAuth: [] }],
       parameters: [
@@ -119,34 +135,22 @@ export const productSwagger = {
           in: "path",
           required: true,
           schema: { type: "string" },
-          description: "The id of the category to search for.",
+          description: "Category ID",
         },
       ],
       responses: {
         200: {
-          description: "List of products in the category",
+          description: "Products in the specified category",
           content: {
             "application/json": {
               schema: {
                 type: "object",
                 properties: {
-                  message: { type: "string", example: "Products in category: Electronics" },
+                  message: { type: "string" },
+                  category: { type: "string" },
                   products: {
                     type: "array",
-                    items: {
-                      type: "object",
-                      properties: {
-                        _id: { type: "string", example: "65f03a1b3e2d6c001fbd8a1a" },
-                        title: { type: "string", example: "Smartphone" },
-                        description: { type: "string", example: "Latest AI-powered smartphone" },
-                        price: { type: "number", example: 999.99 },
-                        salePrice: { type: "number", example: 899.99 },
-                        discountPercentage: { type: "number", example: 10 },
-                        stock: { type: "integer", example: 50 },
-                        brand: { type: "string", example: "Google" },
-                        rating: { type: "number", example: 4.7 },
-                      },
-                    },
+                    items: { type: "object" },
                   },
                 },
               },
@@ -154,28 +158,108 @@ export const productSwagger = {
           },
         },
         404: { description: "Category not found" },
-        500: { description: "Server error" },
+        500: { description: "Internal server error" },
       },
     },
   },
-  "/products/{_id}": {
+
+  "/products/{id}": {
     get: {
-      summary: "get a product",
+      summary: "Get a single product by ID",
       tags: ["Products"],
       security: [{ bearerAuth: [] }],
       parameters: [
         {
-          name: "_id",
+          name: "id",
           in: "path",
           required: true,
           schema: { type: "string" },
         },
       ],
       responses: {
-        200: { description: "Product fatched successfully" },
+        200: {
+          description: "Product fetched successfully",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  message: { type: "string" },
+                  product: { type: "object" },
+                  isInWishlist: { type: "boolean" },
+                },
+              },
+            },
+          },
+        },
         404: { description: "Product not found" },
-        500: { description: "Server error" },
+        500: { description: "Internal server error" },
       },
     },
   },
-}
+
+  "/category/products/name/{categoryname}": {
+    get: {
+      summary: "Get products by category name",
+      tags: ["Category"],
+      parameters: [
+        {
+          name: "categoryname",
+          in: "path",
+          required: true,
+          schema: { type: "string" },
+        },
+      ],
+      responses: {
+        200: {
+          description: "List of products in the given category name",
+          content: {
+            "application/json": {
+              schema: {
+                type: "object",
+                properties: {
+                  products: {
+                    type: "array",
+                    items: { type: "object" },
+                  },
+                },
+              },
+            },
+          },
+        },
+        404: { description: "No products or category found" },
+        500: { description: "Internal server error" },
+      },
+    },
+  },
+
+  "/products/search": {
+    get: {
+      summary: "Search products by title",
+      tags: ["Products"],
+      parameters: [
+        {
+          name: "q",
+          in: "query",
+          required: true,
+          schema: { type: "string" },
+          description: "Search keyword",
+        },
+      ],
+      responses: {
+        200: {
+          description: "Search results",
+          content: {
+            "application/json": {
+              schema: {
+                type: "array",
+                items: { type: "object" },
+              },
+            },
+          },
+        },
+        500: { description: "Internal server error" },
+      },
+    },
+  },
+};

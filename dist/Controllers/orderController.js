@@ -172,7 +172,7 @@ const getOrderRedirectButton = async (req, res) => {
                     description: productDetails.description,
                     salePrice: productDetails.salePrice,
                     totalPrice,
-                    image: productDetails.image,
+                    image: productDetails.images,
                 };
             }));
             // Calculate the sum of all products' totalPrice
