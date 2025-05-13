@@ -25,16 +25,17 @@ const storage = multer_1.default.diskStorage({
     },
     filename: (req, file, cb) => {
         cb(null, Date.now() + "-" + file.originalname);
-    }
+    },
 });
 const upload = (0, multer_1.default)({ storage });
-// router.post("/create",authMiddleware, checkRole(['admin','seller']),upload.single("image"),createProduct);
-router.post("/create", authMiddlewate_1.default, (0, admin_1.default)(['admin', 'seller']), upload.fields([{ name: "image", maxCount: 5 }]), productController_1.createProduct);
-router.get('/all', productController_1.readProduct);
-router.get('/search', productController_1.search);
-// router.put('/update/:id', upload.single("image"), updateProduct);
-router.put("/update/:id", authMiddlewate_1.default, (0, admin_1.default)(['admin', 'seller']), upload.single("image"), productController_1.updateProduct);
-router.delete('/delete/:_id', authMiddlewate_1.default, (0, admin_1.default)(['admin', 'seller']), productController_1.deleteProduct);
-router.get('/:_id', productController_1.getProductById);
+router.post("/create", authMiddlewate_1.default, (0, admin_1.default)(["admin", "seller"]), upload.fields([{ name: "images", maxCount: 5 }]), productController_1.createProduct);
+router.get("/all", productController_1.readProduct);
+router.get("/search", productController_1.search);
+router.put("/update/:id", authMiddlewate_1.default, (0, admin_1.default)(["admin", "seller"]), upload.fields([{ name: "images", maxCount: 5 }]), productController_1.updateProduct);
+router.delete("/delete/:_id", authMiddlewate_1.default, (0, admin_1.default)(["admin", "seller"]), productController_1.deleteProduct);
+router.get("/:_id", productController_1.getProductById);
 router.get("/category/:categoryname", productController_1.getproductBYCategoryname);
+router.put("/:productId/images/:index", authMiddlewate_1.default, (0, admin_1.default)(["admin", "seller"]), upload.single("image"), productController_1.updateProductImage);
+router.delete("/:productId/images/:index", authMiddlewate_1.default, (0, admin_1.default)(["admin", "seller"]), productController_1.deleteProductImage);
+router.post("/:productId/images", authMiddlewate_1.default, (0, admin_1.default)(["admin", "seller"]), upload.array("images", 5), productController_1.addProductImages);
 exports.default = router;

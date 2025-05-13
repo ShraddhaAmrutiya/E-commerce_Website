@@ -77,30 +77,24 @@ exports.placeOrderFromCart = placeOrderFromCart;
 const placeDirectOrder = async (req, res) => {
     try {
         const { userId, productId, quantity } = req.body;
-        // Validate input
         if (!userId || !productId || !quantity || quantity <= 0) {
             return res.status(400).json({ message: "Invalid input data" });
         }
-        // Check if user exists
         const user = await userModel_1.User.findById(userId);
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
-        // Fetch the product
         const product = await productModel_1.Product.findById(productId);
         if (!product) {
             return res.status(404).json({ message: "Product not found" });
         }
-        // Check stock availability
         if (product.stock === 0) {
             return res.status(400).json({ message: "Product is out of stock" });
         }
         if (product.stock < quantity) {
             return res.status(400).json({ message: `Not enough stock for product: ${product.title}` });
         }
-        // Calculate total price
         const totalPrice = product.salePrice * quantity;
-        // Create new order
         const newOrder = new orderModel_1.default({
             userId: new mongoose_1.default.Types.ObjectId(userId),
             products: [

@@ -4,7 +4,7 @@ interface IOrder extends Document {
   userId: mongoose.Types.ObjectId;
   products: { productId: mongoose.Types.ObjectId; quantity: number }[];
   totalPrice: number;
-  status: string; // Pending, Completed, Cancelled, etc.
+  status: string;
   createdAt: Date;
 }
 
