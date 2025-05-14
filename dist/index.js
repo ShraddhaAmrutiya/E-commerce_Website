@@ -21,6 +21,9 @@ const orderRoutes_1 = __importDefault(require("./Routers/orderRoutes"));
 const chatboatRout_1 = __importDefault(require("./Routers/chatboatRout"));
 const WishlistRoutes_1 = __importDefault(require("./Routers/WishlistRoutes"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
+const i18n_1 = __importDefault(require("./i18n"));
+const i18next_http_middleware_1 = __importDefault(require("i18next-http-middleware"));
+const languageMIddleware_1 = require("./middleware/languageMIddleware");
 dotenv_1.default.config();
 const allowedOrigins = ["http://localhost:5173", "http://localhost:3000"];
 const app = (0, express_1.default)();
@@ -39,6 +42,7 @@ const io = new socket_io_1.Server(server, {
         credentials: true,
         allowedHeaders: ["Content-Type", "Authorization", "token", "userId", "userName", "Role"], },
 });
+app.use(i18next_http_middleware_1.default.handle(i18n_1.default));
 const uploadPath = path_1.default.join(process.cwd(), "uploads");
 app.use("/uploads", express_1.default.static(uploadPath));
 app.use(express_1.default.json());
@@ -78,6 +82,13 @@ io.on("connection", (socket) => {
 app.use('/uploads', (req, res, next) => {
     next();
 }, express_1.default.static('uploads'));
+app.use(languageMIddleware_1.languageMiddleware);
+app.get("/test-lang", (req, res) => {
+    res.json({
+        lang: req.language,
+        message: req.t("product.productsInCategory", { category: "पुस्तकें" })
+    });
+});
 app.use('/users', UserRouter_1.default);
 app.use('/category', CategoryRoutes_1.default);
 app.use('/products', ProductRout_1.default);

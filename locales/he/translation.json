@@ -1,0 +1,33 @@
+{
+  "product": {
+    "notFound": "המוצר לא נמצא.",
+    "created": "המוצר נוצר בהצלחה.",
+    "deleted": "המוצר נמחק.",
+    "updated": "המוצר עודכן בהצלחה.",
+    "fetched": "המוצר נשלף בהצלחה.",
+    "missingFields": "נדרשים קטגוריה, כותרת ומחיר תקין.",
+    "unauthorizedRole": "לא מורשה: באפשרותך לעדכן רק את המוצר שלך.",
+    "productsInCategory": "מוצרים בקטגוריה: {{category}}",
+    "invalidId": "פורמט מזהה מוצר שגוי.",
+    "noImageUpload": "לא הועלה תמונה.",
+    "Invalidimageindex": "אינדקס תמונה שגוי.",
+    "Imagereplacedsuccessfully": "התמונה הוחלפה בהצלחה.",
+    "ImageDelete": "התמונה נמחקה בהצלחה.",
+    "addImage": "תמונות נוספו בהצלחה."
+  },
+  "category": {
+    "CategoryNotfound": "הקטגוריה לא נמצאה."
+  },
+  "auth": {
+    "unauthorized": "לא מורשה.",
+    "sellerNotAuthenticated": "המוכר לא מאומת.",
+    "PermissionDenide": "אין לך הרשאה לבצע פעולה זו.",
+    "Notoken": "לא סופק טוקן.",
+    "tokenverificationerr": "שגיאה באימות הטוקן.",
+    "NoUser": "המשתמש לא נמצא...",
+    "tokenVersion": "טוקן לא תקין. אנא התחבר שוב.",
+    "server": {
+      "error": "משהו השתבש. אנא נסה שוב."
+    }
+  }
+}

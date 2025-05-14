@@ -16,7 +16,9 @@ import orderRoute from './Routers/orderRoutes'
 import chatbot from './Routers/chatboatRout'
 import wishlistRoutes from './Routers/WishlistRoutes'
 import cookieParser from "cookie-parser";
-import { JsonWebTokenError } from "jsonwebtoken";
+import i18n from './i18n';
+import i18nextMiddleware from 'i18next-http-middleware';
+import { languageMiddleware } from "./middleware/languageMIddleware";
 
 dotenv.config();
 const allowedOrigins = ["http://localhost:5173", "http://localhost:3000"]; 
@@ -40,6 +42,8 @@ const io = new Server(server, {
      credentials: true, 
      allowedHeaders: ["Content-Type", "Authorization", "token","userId","userName","Role"],  },
 });
+app.use(i18nextMiddleware.handle(i18n));
+
 
 const uploadPath = path.join(process.cwd(), "uploads");
 app.use("/uploads", express.static(uploadPath));
@@ -55,6 +59,8 @@ const swaggerAuth = basicAuth({
 });
 
 app.use("/api-docs", swaggerAuth, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+
+
 
 app.get("/", (req: Request, res: Response) => {
   res.send("Welcome to the E-Commerce API with Live Chat!");
@@ -94,8 +100,14 @@ app.use('/uploads', (req, res, next) => {
   next();
 }, express.static('uploads'));
 
+app.use(languageMiddleware)
 
-
+app.get("/test-lang", (req: Request, res: Response) => {
+  res.json({
+    lang: req.language,
+    message: req.t("product.productsInCategory", { category: "पुस्तकें" })
+  });
+});
 
 app.use('/users',UserRoutes);
 app.use('/category',CategoryRoutes);

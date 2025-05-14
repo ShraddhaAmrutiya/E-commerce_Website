@@ -1,0 +1,33 @@
+{
+  "product": {
+    "notFound": "Product not found.",
+    "created": "Product created successfully.",
+    "deleted": "Product deleted.",
+    "updated": "Product updated successfully.",
+    "fetched": "Product fetched successfully.",
+    "missingFields": "Category, title, and valid price are required.",
+    "unauthorizedRole": "Unauthorized: You can only update your own product",
+    "productsInCategory": "Products in category: {{category}}",
+    "invalidId": "Invalid product ID format.",
+    "noImageUpload": "No image uploaded",
+    "Invalidimageindex": "Invalid image index",
+    "Imagereplacedsuccessfully": "Image replaced successfully",
+    "ImageDelete": "Image deleted successfully",
+    "addImage": "Images added successfully"
+  },
+  "category": {
+    "CategoryNotfound": "Category not found."
+  },
+  "auth": {
+    "unauthorized": "Unauthorized",
+    "sellerNotAuthenticated": "Seller is not authenticated.",
+    "PermissionDenide": "You do not have permission to perform this action.",
+    "Notoken": "No token provided",
+    "tokenverificationerr": "Token verification error",
+    "NoUser": "User not found...",
+    "tokenVersion": "Invalid token. Please log in again.",
+    "server": {
+      "error": "Something went wrong. Please try again."
+    }
+  }
+}

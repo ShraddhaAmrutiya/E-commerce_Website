@@ -51,26 +51,23 @@ const createProduct = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { category, title, description, price, discountPercentage, stock, brand, rating } = req.body;
 
-    // Parse values
     const parsedPrice = Number(price);
     const parsedStock = Number(stock);
     const parsedRating = Number(rating);
     const parsedDiscount = Number(discountPercentage);
 
-    // Validation
     if (!category || !title || isNaN(parsedPrice)) {
-      return res.status(400).json({ message: "Category, title, and valid price are required." });
+      return res.status(400).json({ message: req.t("product.missingFields") });
     }
 
     const sellerId = req.user?.id;
     if (!sellerId) {
-      return res.status(400).json({ message: "Seller is not authenticated." });
+      return res.status(400).json({ message: req.t("auth.sellerNotAuthenticated") });
     }
 
-    // Check if category exists
     const categoryDoc = await Category.findOne({ name: category });
     if (!categoryDoc) {
-      return res.status(400).json({ message: `Category '${category}' not found.` });
+      return res.status(400).json({ message: req.t("category.CategoryNotfound") });
     }
 
     // Calculate sale price
@@ -80,8 +77,8 @@ const createProduct = async (req: AuthenticatedRequest, res: Response) => {
 
     // Handle images
     let imageUrls: string[] = [];
-    if (req.files && 'images' in req.files) {
-      imageUrls = (req.files['images'] as Express.Multer.File[]).map((file) => `/uploads/${file.filename}`);
+    if (req.files && "images" in req.files) {
+      imageUrls = (req.files["images"] as Express.Multer.File[]).map((file) => `/uploads/${file.filename}`);
     }
 
     // Create new product
@@ -90,7 +87,7 @@ const createProduct = async (req: AuthenticatedRequest, res: Response) => {
       title,
       description,
       price: parsedPrice,
-      images: imageUrls, // Images field will now contain all uploaded images
+      images: imageUrls,
       salePrice: finalSalePrice,
       discountPercentage: parsedDiscount,
       stock: parsedStock,
@@ -102,7 +99,7 @@ const createProduct = async (req: AuthenticatedRequest, res: Response) => {
     await newProduct.save();
 
     return res.status(201).json({
-      message: "Product created successfully.",
+      message: req.t("product.created"),
       product: newProduct,
     });
   } catch (error) {
@@ -111,18 +108,14 @@ const createProduct = async (req: AuthenticatedRequest, res: Response) => {
   }
 };
 
-
 const readProduct = async (req: Request, res: Response) => {
   try {
     const limit = parseInt(req.query.limit as string) || 10;
 
-    const products = await Product.find()
-      .populate("category", "name")
-      .limit(limit)
-      .exec();
+    const products = await Product.find().populate("category", "name").limit(limit).exec();
 
     if (!products || products.length === 0) {
-      return res.status(404).json({ message: "No products found" });
+      return res.status(404).json({ message: req.t("product.notFound") });
     }
 
     const groupedByCategory: Record<string, any[]> = {};
@@ -147,10 +140,9 @@ const readProduct = async (req: Request, res: Response) => {
         rating: product.rating,
       });
     }
-    
 
     return res.json({
-      message: `List of ${limit} products grouped by category`,
+      message: req.t("product.fetched"),
       categories: Object.entries(groupedByCategory).map(([category, products]) => ({
         category,
         products,
@@ -170,24 +162,23 @@ const updateProduct = async (req: AuthenticatedRequest, res: Response) => {
 
   try {
     const product = await Product.findById(id);
-    if (!product) {
-      return res.status(404).json({ message: "Product not found." });
-    }
+
+    if (!product) return res.status(404).json({ message: req.t("product.notFound") });
 
     const userId = req.user?.id;
     const userRole = req.user?.Role;
 
     if (product.seller.toString() !== userId && userRole !== "admin") {
-      return res.status(403).json({ message: "Unauthorized: You can only update your own product" });
+      return res.status(403).json({ message: req.t("product.unauthorizedRole") });
     }
     if (categoryId !== undefined) {
-            const categoryDoc = (await Category.findById(categoryId)) as { _id: Types.ObjectId } | null;
-      
-            if (!categoryDoc) {
-              return res.status(400).json({ message: `Category with ID '${categoryId}' not found.` });
-            }
-            product.category = categoryDoc._id; 
-          }
+      const categoryDoc = (await Category.findById(categoryId)) as { _id: Types.ObjectId } | null;
+
+      if (!categoryDoc) {
+        return res.status(400).json({ message: req.t("product.CategoryNotfound") });
+      }
+      product.category = categoryDoc._id;
+    }
     if (title) product.title = title;
     if (description) product.description = description;
     if (stock !== undefined) product.stock = stock;
@@ -216,29 +207,28 @@ const updateProduct = async (req: AuthenticatedRequest, res: Response) => {
 
     await product.save();
 
-    return res.status(200).json({ message: "Product updated successfully.", product });
+    return res.status(200).json({ message: req.t("product.updated"), product });
   } catch (error) {
     return res.status(500).json({ error: (error as Error).message });
   }
 };
 
-
 const deleteProduct = async (req: AuthenticatedRequest, res: Response) => {
-  const { _id } = req.params; 
+  const { _id } = req.params;
 
   try {
     const product = await Product.findById(_id);
-    if (!product) return res.status(404).json({ message: "Product not found" });
+    if (!product) return res.status(404).json({ message: req.t("product.notFound") });
 
     if (product.seller.toString() !== req.user.id && req.user.Role !== "admin") {
-      return res.status(403).json({ message: "Unauthorized" });
+      return res.status(403).json({ message: req.t("auth.unauthorized") });
     }
 
     await Cart.updateMany({}, { $pull: { items: { productId: _id } } });
 
     const productIdToRemove = new mongoose.Types.ObjectId(_id);
     await Wishlist.updateMany(
-      { 'products.productId': productIdToRemove },
+      { "products.productId": productIdToRemove },
       { $pull: { products: { productId: productIdToRemove } } }
     );
 
@@ -251,7 +241,7 @@ const deleteProduct = async (req: AuthenticatedRequest, res: Response) => {
 
     await product.deleteOne();
 
-    return res.status(200).json({ message: "Product deleted." });
+    return res.status(200).json({ message: req.t("product.deleted") });
   } catch (error) {
     return res.status(500).json({ error: (error as Error).message });
   }
@@ -261,45 +251,47 @@ const getProductsByCategory = async (req: Request<{ id: string }>, res: Response
   try {
     const { id } = req.params;
     const category = await Category.findById(id);
-    if (!category) return res.status(404).json({ message: `Category '${id}' not found.` });
+    if (!category) return res.status(404).json({ message: req.t("category.CategoryNotfound") });
 
     const products = await Product.find({ category: category._id });
-    return res.status(200).json({ message: `Products in category: ${category.name}`, category: category.name, products });
+    return res
+      .status(200)
+      .json({ message: req.t("product.productsInCategory"), category: category.name, products });
   } catch (error) {
     return res.status(500).json({ error: (error as Error).message });
   }
 };
-
+//--------------------------------------------------------------------------------------------------------------------------
 const getProductById = async (req: Request<{ _id: string }>, res: Response) => {
   try {
     const { _id } = req.params;
     const userId = req.user?.id;
 
     if (!mongoose.Types.ObjectId.isValid(_id)) {
-      return res.status(400).json({ message: "Invalid product ID format." });
+      return res.status(400).json({ message:req.t("product.invalidId") });
     }
 
     const product = await Product.findById(_id).populate("category", "name");
-    if (!product) return res.status(404).json({ message: "Product not found." });
+    if (!product) return res.status(404).json({ message:req.t("product.notFound") });
 
     const wishlistItem = userId ? await Wishlist.findOne({ userId, productId: _id }) : null;
     const isInWishlist = !!wishlistItem;
 
-    return res.status(200).json({ message: "Product fetched successfully.", product, isInWishlist });
+    return res.status(200).json({ message: req.t("product.fetched"), product, isInWishlist });
   } catch (error) {
     return res.status(500).json({ error: (error as Error).message });
   }
 };
 
-const getproductBYCategoryname = async (req:Request, res:Response) => {
+const getproductBYCategoryname = async (req: Request, res: Response) => {
   try {
     const categoryname = req.params.categoryname;
     const category = await Category.findOne({ name: categoryname });
 
-    if (!category) return res.status(404).json({ message: "Category not found" });
+    if (!category) return res.status(404).json({ message: req.t("category.CategoryNotfound") });
 
     const products = await Product.find({ category: category._id });
-    if (!products.length) return res.status(404).json({ message: "No products found" });
+    if (!products.length) return res.status(404).json({ message: req.t("product.notFound") });
 
     res.json({ products });
   } catch (error) {
@@ -307,7 +299,7 @@ const getproductBYCategoryname = async (req:Request, res:Response) => {
   }
 };
 
-const search = async (req:Request, res:Response) => {
+const search = async (req: Request, res: Response) => {
   try {
     const query = req.query.q;
     const products = await Product.find({ title: { $regex: query, $options: "i" } });
@@ -317,26 +309,25 @@ const search = async (req:Request, res:Response) => {
   }
 };
 
-
 //  Replace a specific image
 export const updateProductImage = async (req: AuthenticatedRequest, res: Response) => {
   const { productId, index } = req.params;
   const file = req.file;
 
-  if (!file) return res.status(400).json({ message: "No image uploaded" });
+  if (!file) return res.status(400).json({ message: req.t("product.noImageUpload") });
 
   const product = await Product.findById(productId);
-  if (!product) return res.status(404).json({ message: "Product not found" });
+  if (!product) return res.status(404).json({ message: req.t("product.notFound") });
 
   const userId = req.user?.id;
   const userRole = req.user?.Role;
   if (product.seller.toString() !== userId && userRole !== "admin") {
-    return res.status(403).json({ message: "Unauthorized" });
+    return res.status(403).json({ message: req.t("auth.Unauthorized") });
   }
 
   const i = parseInt(index);
   if (isNaN(i) || i < 0 || i >= product.images.length) {
-    return res.status(400).json({ message: "Invalid image index" });
+    return res.status(400).json({ message: req.t("product.Invalidimageindex") });
   }
 
   const oldPath = path.join(process.cwd(), product.images[i]);
@@ -346,7 +337,7 @@ export const updateProductImage = async (req: AuthenticatedRequest, res: Respons
   product.images[i] = `/uploads/${file.filename}`;
   await product.save();
 
-  res.status(200).json({ message: "Image replaced successfully", images: product.images });
+  res.status(200).json({ message: req.t("product.Imagereplacedsuccessfully"), images: product.images });
 };
 
 // Delete a specific image
@@ -354,17 +345,17 @@ export const deleteProductImage = async (req: AuthenticatedRequest, res: Respons
   const { productId, index } = req.params;
 
   const product = await Product.findById(productId);
-  if (!product) return res.status(404).json({ message: "Product not found" });
+  if (!product) return res.status(404).json({ message: req.t("product.notFound")});
 
   const userId = req.user?.id;
   const userRole = req.user?.Role;
   if (product.seller.toString() !== userId && userRole !== "admin") {
-    return res.status(403).json({ message: "Unauthorized" });
+    return res.status(403).json({ message: req.t("auth.Unauthorized")  });
   }
 
   const i = parseInt(index);
   if (isNaN(i) || i < 0 || i >= product.images.length) {
-    return res.status(400).json({ message: "Invalid image index" });
+    return res.status(400).json({ message: req.t("product.Invalidimageindex") });
   }
 
   const imgToDelete = product.images[i];
@@ -374,7 +365,7 @@ export const deleteProductImage = async (req: AuthenticatedRequest, res: Respons
   product.images.splice(i, 1);
   await product.save();
 
-  res.status(200).json({ message: "Image deleted successfully", images: product.images });
+  res.status(200).json({ message: req.t("product.ImageDelete"), images: product.images });
 };
 
 //  Add new images
@@ -383,23 +374,23 @@ export const addProductImages = async (req: AuthenticatedRequest, res: Response)
   const files = req.files as Express.Multer.File[];
 
   if (!files || files.length === 0) {
-    return res.status(400).json({ message: "No images uploaded" });
+    return res.status(400).json({ message: req.t("product.noImageUpload") });
   }
 
   const product = await Product.findById(productId);
-  if (!product) return res.status(404).json({ message: "Product not found" });
+  if (!product) return res.status(404).json({ message: req.t("product.notFound") });
 
   const userId = req.user?.id;
   const userRole = req.user?.Role;
   if (product.seller.toString() !== userId && userRole !== "admin") {
-    return res.status(403).json({ message: "Unauthorized" });
+    return res.status(403).json({ message:req.t("auth.Unauthorized")});
   }
 
-  const newImagePaths = files.map(file => `/uploads/${file.filename}`);
+  const newImagePaths = files.map((file) => `/uploads/${file.filename}`);
   product.images.push(...newImagePaths);
   await product.save();
 
-  res.status(200).json({ message: "Images added successfully", images: product.images });
+  res.status(200).json({ message: req.t("product.addImage"), images: product.images });
 };
 export {
   createProduct,

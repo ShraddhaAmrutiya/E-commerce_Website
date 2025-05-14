@@ -37,10 +37,12 @@ const ProductSchema = new mongoose_1.Schema({
     },
     description: {
         type: String,
-        match: [
-            /^[\w\s.,'"/\-+()%*#:|]{1,1000}$/,
-            "Please enter a valid description.",
-        ],
+        min: 2,
+        max: 150
+        // match: [
+        //   /^[\w\s.,'"!@#$%^&*()-_+={}[]:;|]{1,1000}$/,
+        //   "Please enter a valid description.",
+        // ],
     },
     images: [{
             type: String,
@@ -64,7 +66,7 @@ const ProductSchema = new mongoose_1.Schema({
     },
     category: {
         type: mongoose_1.Schema.Types.ObjectId,
-        ref: "Category", // Ensure it explicitly refers to the Category model
+        ref: "Category",
     },
     brand: {
         type: String,
@@ -75,22 +77,19 @@ const ProductSchema = new mongoose_1.Schema({
     },
     rating: {
         type: Number,
-        default: 0, // Ensures no undefined values
+        default: 0,
     },
     seller: {
         type: mongoose_1.default.Schema.Types.ObjectId,
-        ref: "User", // Ensure it explicitly refers to the User model
+        ref: "User",
         required: true,
     },
 }, { timestamps: true });
-// Auto-calculate salePrice if discountPercentage exists
 ProductSchema.pre("save", function (next) {
     if (this.discountPercentage) {
-        // If discount percentage exists, calculate sale price based on discount
         this.salePrice = this.price - this.price * (this.discountPercentage / 100);
     }
     else {
-        // If no discount, salePrice is the same as price
         this.salePrice = this.price;
     }
     next();
