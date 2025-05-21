@@ -9,47 +9,62 @@ const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const UserSchema = new mongoose_1.Schema({
     userName: {
         type: String,
-        required: [true, "Username is required"],
+        required: [true, "validation.usernameRequired"],
         unique: true,
         trim: true,
-        match: [/^[a-zA-Z0-9._-]{3,50}$/, "Please enter a valid user name."],
+        match: [/^[a-zA-Z0-9._-]{3,50}$/, "validation.invalidUsername"],
     },
-    firstName: { type: String, trim: true, match: [/^[a-zA-Z0-9._-]{3,50}$/, "Please enter a valid first name."] },
-    lastName: { type: String, trim: true, match: [/^[a-zA-Z0-9._-]{3,50}$/, "Please enter a valid last name."] },
+    firstName: {
+        type: String,
+        trim: true,
+        match: [/^[a-zA-Z0-9._-]{3,50}$/, "validation.invalidFirstName"],
+    },
+    lastName: {
+        type: String,
+        trim: true,
+        match: [/^[a-zA-Z0-9._-]{3,50}$/, "validation.invalidLastName"],
+    },
     email: {
         type: String,
-        required: [true, "Email is required"],
+        required: [true, "validation.emailRequired"],
         unique: true,
         trim: true,
-        match: [/^[a-z0-9]+(?:\.[a-z0-9]+)*@[a-z0-9-]+\.(?:com|in)$/i, "Please enter a valid email ."],
+        match: [/^[a-z0-9]+(?:\.[a-z0-9]+)*@[a-z0-9-]+\.(?:com|in)$/i, "validation.invalidEmail"],
     },
     phone: {
         type: String,
-        match: [/^(\+?\d{10,15})$/, "Please enter a valid phone number."],
+        match: [/^(\+?\d{10,15})$/, "validation.invalidPhone"],
     },
     age: {
         type: Number,
-        min: [12, "Age must be at least 12"],
-        max: [100, "Age must be less than or equal to 100"],
+        min: [12, "validation.ageMin"],
+        max: [100, "validation.ageMax"],
     },
     gender: { type: String },
-    Role: { type: String, enum: ["customer", "seller", "admin"], default: "customer" },
+    Role: {
+        type: String,
+        required: [true, "validation.roleRequired"],
+        enum: {
+            values: ["customer", "seller", "admin"],
+            message: "validation.invalidRole",
+        },
+        default: "customer",
+    },
     password: {
         type: String,
-        // required: [true, "Password is required"],
-        match: [/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^.-=+<>?&*()]).{8,15}$/, "Password must be at least 8 characters and include upper, lower, number and special character"],
+        match: [/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^.-=+<>?&*()]).{8,15}$/, "validation.invalidPassword"],
     },
     resetToken: { type: String },
     tokenVersion: { type: Number, default: 0 },
 });
-//  Hash password before save
+// Hash password before saving
 UserSchema.pre("save", async function (next) {
     if (!this.isModified("password"))
         return next();
     this.password = await bcryptjs_1.default.hash(this.password, 10);
     next();
 });
-//  Compare passwords
+// Compare passwords
 UserSchema.methods.matchPassword = async function (password) {
     return await bcryptjs_1.default.compare(password, this.password);
 };

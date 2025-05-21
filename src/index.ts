@@ -10,6 +10,7 @@ import http from "http";
 import { Server } from "socket.io";
 import UserRoutes from './Routers/UserRouter'
 import CategoryRoutes from './Routers/CategoryRoutes'
+import ReviewRoutes from './Routers/ReviewRout'
 import ProductRoutes from './Routers/ProductRout'
 import cartRoutes from './Routers/cartRoutes'
 import orderRoute from './Routers/orderRoutes'
@@ -111,6 +112,7 @@ app.get("/test-lang", (req: Request, res: Response) => {
 
 app.use('/users',UserRoutes);
 app.use('/category',CategoryRoutes);
+app.use('/reviews',ReviewRoutes);
 app.use('/products',ProductRoutes)
 app.use('/cart',cartRoutes)
 app.use('/order',orderRoute)

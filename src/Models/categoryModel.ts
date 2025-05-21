@@ -11,7 +11,7 @@ const CategorySchema: Schema<ICategory> = new Schema(
       type: String,
       required: [true, "Category name is required"],
       unique: true,
-      match: [/^[a-zA-Z._\s-]{3,20}$/, "Please enter a valid user name."],
+      match: [/^[a-zA-Z._\s-]{3,20}$/, "Please enter a valid category name."],
     },
     description: {
       type: String,

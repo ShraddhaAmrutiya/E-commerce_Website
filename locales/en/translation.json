@@ -16,8 +16,17 @@
     "addImage": "Images added successfully"
   },
   "category": {
-    "CategoryNotfound": "Category not found."
+    "CategoryNotfound": "Category not found.",
+    "NameRequired": "Category name is required.",
+    "Exists": "Category already exists.",
+    "Created": "Category created.",
+    "Updated": "Category updated.",
+    "NotFound": "Category not found.",
+    "NoProductsFound": "No products found under this category.",
+    "DeleteFailed": "Failed to delete category.",
+    "DeleteSuccess": "Category and associated products deleted successfully."
   },
+
   "auth": {
     "unauthorized": "Unauthorized",
     "sellerNotAuthenticated": "Seller is not authenticated.",
@@ -28,6 +37,87 @@
     "tokenVersion": "Invalid token. Please log in again.",
     "server": {
       "error": "Something went wrong. Please try again."
-    }
+    },
+    "FillRequired": "Fill the required fields.",
+    "UserExists": "User already exists, please use another email.",
+    "Registered": "User registered successfully.",
+    "LoginSuccess": "User logged in successfully.",
+    "InvalidCredentials": "Please enter valid credentials.",
+    "UserNotFound": "User not found.",
+    "JWTError": "JWT secrets are not defined in the environment variables.",
+    "ResetEmailSent": "Reset token sent to email.",
+    "ResetSuccess": "Password reset successfully. Please log in again.",
+    "TokenInvalid": "Invalid or expired reset token.",
+    "MissingTokenPassword": "Reset token and new password are required.",
+    "AllFieldsRequired": "All fields are required.",
+    "PasswordFormat": "Password must be 8-15 characters and include at least one uppercase letter, one lowercase letter, one number, and one special character.",
+    "IncorrectOldPassword": "Incorrect old password.",
+    "PasswordUpdated": "Password updated successfully.",
+    "LogoutSuccess": "User logged out successfully.",
+    "EmailRequired": "Email is required.",
+    "UseRegisteredEmail": "Please enter a registered email ID.",
+    "ServerError": "Server error"
+  },
+  "user": {
+    "NotFound": "User not found.",
+    "CategoryNotfound": "Category not found."
+  },
+  "validation": {
+    "usernameRequired": "Username is required.",
+    "invalidUsername": "Please enter a valid username.",
+    "invalidFirstName": "Please enter a valid first name.",
+    "invalidLastName": "Please enter a valid last name.",
+    "emailRequired": "Email is required.",
+    "invalidEmail": "Please enter a valid email.",
+    "invalidPhone": "Please enter a valid phone number.",
+    "ageMin": "Age must be at least 12.",
+    "ageMax": "Age must be less than or equal to 100.",
+    "invalidPassword": "Password must be at least 8 characters and include uppercase, lowercase, number, and special character.",
+    "invalidRole": "Invalid role. Role must be one of: customer, seller, admin."
+  },
+  "cart": {
+    "InvalidUserId": "Invalid user ID format",
+    "InvalidIds": "Invalid userId or productId format",
+    "InvalidQuantity": "Quantity must be a positive integer",
+    "Updated": "Cart updated successfully",
+    "NotFound": "Cart not found",
+    "ProductNotFound": "Product not found in cart",
+    "Removed": "{{name}} removed from cart",
+    "Cleared": "Cart cleared successfully",
+    "MissingParams": "Missing parameters",
+    "Increased": "Quantity increased",
+    "Decreased": "Quantity decreased"
+  },
+  "order": {
+    "InvalidUserId": "Invalid user ID",
+    "CartNotFound": "Cart not found",
+    "CartEmpty": "Cart is empty",
+    "ProductMissing": "Product details missing for cart item.",
+    "NotEnoughStock": "Not enough stock for product: {{title}}",
+    "PlacedSuccessfully": "Order placed successfully",
+    "UserNotFound": "User not found",
+    "ProductNotFound": "Product not found",
+    "OutOfStock": "Product is out of stock",
+    "InvalidInput": "Invalid input data",
+    "DirectOrderSuccess": "Direct order placed successfully",
+    "NoOrders": "No orders found for this user.",
+    "OrdersRetrieved": "Orders retrieved successfully",
+    "NoPastOrders": "No past orders found",
+    "PastOrdersFound": "Past orders found",
+    "UnknownProduct": "Unknown Product",
+    "NoDescription": "No description available"
+  },
+    "wishlist": {
+    "UserIdMissing": "User ID is missing.",
+    "UserIdRequired": "User ID is required.",
+    "ProductIdRequired": "Product ID is required.",
+    "ProductNotFound": "Product not found.",
+    "AlreadyInWishlist": "Product already in wishlist.",
+    "AddedSuccess": "Product added to wishlist successfully.",
+    "WishlistNotFound": "Wishlist not found for this user.",
+    "ProductNotInWishlist": "Product not found in the wishlist.",
+    "RemovedSuccess": "Product removed from wishlist.",
+    "InternalError": "Something went wrong. Please try again later."
   }
+
 }

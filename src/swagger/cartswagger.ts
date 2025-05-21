@@ -189,7 +189,50 @@ export const cartSwagger = {
             },
             },
         },
-    }
+    },
+    "/cart/decrease":{
+        put: {
+            summary: 'decrease product in cart ',
+            tags: ['Cart'],
+            security: [{ bearerAuth: [] }],
+            requestBody: {
+            required: true,
+            content: {
+                'application/json': {
+                schema: {
+                    type: 'object',
+                    properties: {
+                    userId: {
+                        type: 'string',
+                        example: '1234567890',
+                    },
+                    productId: {
+                        type: 'string',
+                        example: 'abcdef12345',
+                    },
+                    
+                    },
+                    required: ['userId', 'productId'],
+                },
+                },
+            },
+            },
+            responses: {
+            200: {
+                description: 'Product quantity updated in cart',
+            },
+            400: {
+                description: 'Cart not found',
+            },
+            404: {
+                description: 'Product not found in cart',
+            },
+            500: {
+                description: 'Internal server error',
+            },
+            },
+        },
+    },
 
     },
   };

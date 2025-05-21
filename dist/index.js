@@ -15,6 +15,7 @@ const http_1 = __importDefault(require("http"));
 const socket_io_1 = require("socket.io");
 const UserRouter_1 = __importDefault(require("./Routers/UserRouter"));
 const CategoryRoutes_1 = __importDefault(require("./Routers/CategoryRoutes"));
+const ReviewRout_1 = __importDefault(require("./Routers/ReviewRout"));
 const ProductRout_1 = __importDefault(require("./Routers/ProductRout"));
 const cartRoutes_1 = __importDefault(require("./Routers/cartRoutes"));
 const orderRoutes_1 = __importDefault(require("./Routers/orderRoutes"));
@@ -91,6 +92,7 @@ app.get("/test-lang", (req, res) => {
 });
 app.use('/users', UserRouter_1.default);
 app.use('/category', CategoryRoutes_1.default);
+app.use('/reviews', ReviewRout_1.default);
 app.use('/products', ProductRout_1.default);
 app.use('/cart', cartRoutes_1.default);
 app.use('/order', orderRoutes_1.default);

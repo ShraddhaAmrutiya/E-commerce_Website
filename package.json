@@ -11,7 +11,7 @@
     "express-basic-auth": "^1.2.1",
     "google-auth-library": "^9.15.1",
     "http": "^0.0.1-security",
-    "i18next": "^25.1.2",
+    "i18next": "^25.2.0",
     "i18next-fs-backend": "^2.6.0",
     "i18next-http-middleware": "^3.7.4",
     "jsonwebtoken": "^9.0.2",

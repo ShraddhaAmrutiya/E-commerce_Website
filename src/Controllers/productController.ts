@@ -32,7 +32,7 @@ export interface UpdateRequestBody {
   stock?: number[];
   brand?: string[];
   images?: string[];
-  rating?: number;
+  // rating?: number;
 }
 
 interface AuthenticatedRequest extends Request {
@@ -158,7 +158,7 @@ const readProduct = async (req: Request, res: Response) => {
 
 const updateProduct = async (req: AuthenticatedRequest, res: Response) => {
   const { id } = req.params;
-  const { categoryId, title, description, price, salePrice, discountPercentage, stock, brand, rating } = req.body;
+  const { categoryId, title, description, price, salePrice, discountPercentage, stock, brand } = req.body;
 
   try {
     const product = await Product.findById(id);
@@ -183,7 +183,7 @@ const updateProduct = async (req: AuthenticatedRequest, res: Response) => {
     if (description) product.description = description;
     if (stock !== undefined) product.stock = stock;
     if (brand) product.brand = brand;
-    if (rating !== undefined) product.rating = rating;
+    // if (rating !== undefined) product.rating = rating;
 
     if (price !== undefined) {
       product.price = price;
@@ -243,7 +243,7 @@ const deleteProduct = async (req: AuthenticatedRequest, res: Response) => {
 
     return res.status(200).json({ message: req.t("product.deleted") });
   } catch (error) {
-    return res.status(500).json({ error: (error as Error).message });
+    return res.status(500).json({ message: req.t("auth.ServerError") });
   }
 };
 
@@ -258,10 +258,9 @@ const getProductsByCategory = async (req: Request<{ id: string }>, res: Response
       .status(200)
       .json({ message: req.t("product.productsInCategory"), category: category.name, products });
   } catch (error) {
-    return res.status(500).json({ error: (error as Error).message });
+    return res.status(500).json({ message: req.t("auth.ServerError") });
   }
 };
-//--------------------------------------------------------------------------------------------------------------------------
 const getProductById = async (req: Request<{ _id: string }>, res: Response) => {
   try {
     const { _id } = req.params;
@@ -279,7 +278,7 @@ const getProductById = async (req: Request<{ _id: string }>, res: Response) => {
 
     return res.status(200).json({ message: req.t("product.fetched"), product, isInWishlist });
   } catch (error) {
-    return res.status(500).json({ error: (error as Error).message });
+    return res.status(500).json({ message: req.t("auth.ServerError") });
   }
 };
 
@@ -295,7 +294,7 @@ const getproductBYCategoryname = async (req: Request, res: Response) => {
 
     res.json({ products });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: req.t("auth.ServerError") });
   }
 };
 
@@ -305,7 +304,7 @@ const search = async (req: Request, res: Response) => {
     const products = await Product.find({ title: { $regex: query, $options: "i" } });
     res.json(products);
   } catch (err) {
-    res.status(500).json({ message: "Server error" });
+    return res.status(500).json({ message: req.t("auth.ServerError") });
   }
 };
 

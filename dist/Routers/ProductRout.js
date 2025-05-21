@@ -16,9 +16,6 @@ if (!fs_1.default.existsSync(uploadDir)) {
     fs_1.default.mkdirSync(uploadDir, { recursive: true });
     console.log(`Uploads folder created at: ${uploadDir}`);
 }
-else {
-    console.log(`Uploads folder exists at: ${uploadDir}`);
-}
 const storage = multer_1.default.diskStorage({
     destination: (req, file, cb) => {
         cb(null, uploadDir);

@@ -106,7 +106,7 @@ const readProduct = async (req, res) => {
 exports.readProduct = readProduct;
 const updateProduct = async (req, res) => {
     const { id } = req.params;
-    const { categoryId, title, description, price, salePrice, discountPercentage, stock, brand, rating } = req.body;
+    const { categoryId, title, description, price, salePrice, discountPercentage, stock, brand } = req.body;
     try {
         const product = await productModel_1.Product.findById(id);
         if (!product)
@@ -131,8 +131,7 @@ const updateProduct = async (req, res) => {
             product.stock = stock;
         if (brand)
             product.brand = brand;
-        if (rating !== undefined)
-            product.rating = rating;
+        // if (rating !== undefined) product.rating = rating;
         if (price !== undefined) {
             product.price = price;
             if (discountPercentage !== undefined) {
@@ -187,7 +186,7 @@ const deleteProduct = async (req, res) => {
         return res.status(200).json({ message: req.t("product.deleted") });
     }
     catch (error) {
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({ message: req.t("auth.ServerError") });
     }
 };
 exports.deleteProduct = deleteProduct;
@@ -203,11 +202,10 @@ const getProductsByCategory = async (req, res) => {
             .json({ message: req.t("product.productsInCategory"), category: category.name, products });
     }
     catch (error) {
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({ message: req.t("auth.ServerError") });
     }
 };
 exports.getProductsByCategory = getProductsByCategory;
-//--------------------------------------------------------------------------------------------------------------------------
 const getProductById = async (req, res) => {
     try {
         const { _id } = req.params;
@@ -223,7 +221,7 @@ const getProductById = async (req, res) => {
         return res.status(200).json({ message: req.t("product.fetched"), product, isInWishlist });
     }
     catch (error) {
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({ message: req.t("auth.ServerError") });
     }
 };
 exports.getProductById = getProductById;
@@ -239,7 +237,7 @@ const getproductBYCategoryname = async (req, res) => {
         res.json({ products });
     }
     catch (error) {
-        res.status(500).json({ message: "Server error" });
+        return res.status(500).json({ message: req.t("auth.ServerError") });
     }
 };
 exports.getproductBYCategoryname = getproductBYCategoryname;
@@ -250,7 +248,7 @@ const search = async (req, res) => {
         res.json(products);
     }
     catch (err) {
-        res.status(500).json({ message: "Server error" });
+        return res.status(500).json({ message: req.t("auth.ServerError") });
     }
 };
 exports.search = search;

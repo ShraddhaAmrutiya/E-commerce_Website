@@ -1,6 +1,6 @@
 export const ChatboatSwagger = {
     paths: {
-        "/chatbot": {  // Removed trailing slash
+        "/chatbot": { 
             post: {
                 summary: "Chat with AI",
                 description: "Send a message to Gemini AI and receive a response.",
@@ -17,7 +17,7 @@ export const ChatboatSwagger = {
                                         example: "Hello, how are you?",
                                     },
                                 },
-                                required: ["message"], // Ensure message is required
+                                required: ["message"], 
                             },
                         },
                     },

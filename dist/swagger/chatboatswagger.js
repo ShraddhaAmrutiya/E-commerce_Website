@@ -20,7 +20,7 @@ exports.ChatboatSwagger = {
                                         example: "Hello, how are you?",
                                     },
                                 },
-                                required: ["message"], // Ensure message is required
+                                required: ["message"],
                             },
                         },
                     },

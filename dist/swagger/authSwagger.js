@@ -83,10 +83,18 @@ exports.userSwagger = {
             }
         }
     },
-    "/users/reset-password": {
+    "/users/reset-password/{token}": {
         post: {
             summary: "Reset user password",
             tags: ["Users"],
+            parameters: [
+                {
+                    name: "token",
+                    in: "path",
+                    required: true,
+                    schema: { type: "string" }
+                }
+            ],
             requestBody: {
                 required: true,
                 content: {
@@ -94,10 +102,9 @@ exports.userSwagger = {
                         schema: {
                             type: "object",
                             properties: {
-                                resetToken: { type: "string", example: "abcdef123456" },
-                                newPassword: { type: "string", example: "newpassword123" }
+                                newPassword: { type: "string", example: "abcdef123456" },
                             },
-                            required: ["resetToken", "newPassword"]
+                            required: ["newPassword"]
                         }
                     }
                 }

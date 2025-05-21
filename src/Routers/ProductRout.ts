@@ -22,10 +22,8 @@ const router = express.Router();
 const uploadDir = path.join(process.cwd(), "uploads");
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir, { recursive: true });
-  console.log(`Uploads folder created at: ${uploadDir}`);
-} else {
-  console.log(`Uploads folder exists at: ${uploadDir}`);
-}
+  console.log(`Uploads folder created at: ${uploadDir}`);}
+
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {

@@ -8,8 +8,6 @@ import {
   decreaseQuantity,
 } from "../Controllers/cartcontroller";
 import authMiddleware from "../middleware/authMiddlewate";
-import Cart from "../Models/cartModel";
-import checkRole from "../middleware/admin";
 
 const router = express.Router();
 

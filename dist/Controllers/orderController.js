@@ -13,23 +13,20 @@ const placeOrderFromCart = async (req, res) => {
     try {
         const { userId } = req.params;
         if (!mongoose_1.default.Types.ObjectId.isValid(userId)) {
-            return res.status(400).json({ message: "Invalid user ID" });
+            return res.status(400).json({ message: req.t("order.InvalidUserId") });
         }
-        // Fetch the cart for the user and populate product details
-        const cart = await cartModel_1.default.findOne({ userId }).populate('products.productId');
+        const cart = await cartModel_1.default.findOne({ userId }).populate("products.productId");
         if (!cart) {
-            return res.status(404).json({ message: "Cart not found" });
+            return res.status(404).json({ message: req.t("order.CartNotFound") });
         }
         if (cart.products.length === 0) {
-            return res.status(400).json({ message: "Cart is empty" });
+            return res.status(400).json({ message: req.t("order.CartEmpty") });
         }
-        // Log the entire cart object and its products to inspect what is being populated
         let totalPrice = 0;
         const products = cart.products.map((item) => {
             const product = item.productId;
-            // Log the product object to inspect its structure
             if (!product) {
-                return res.status(400).json({ message: "Product details missing for cart item." });
+                return res.status(400).json({ message: req.t("order.CartEmpty") });
             }
             totalPrice += product.price * item.quantity;
             return {
@@ -37,40 +34,31 @@ const placeOrderFromCart = async (req, res) => {
                 quantity: item.quantity,
             };
         });
-        // Create a new order with status "Pending"
         const newOrder = new orderModel_1.default({
             userId: new mongoose_1.default.Types.ObjectId(userId),
             products,
             totalPrice,
             status: "Pending",
         });
-        // Save the new order
         await newOrder.save();
-        // Update the stock for each product in the cart
         for (const item of cart.products) {
             const product = item.productId;
-            // Log the product to check if it has the stock property
-            // console.log('Product for stock check:', product);
             if (!product) {
                 return res.status(400).json({ message: "Product details missing for cart item." });
             }
-            // Check if the product has enough stock
             if (product.stock == null || product.stock < item.quantity) {
-                return res.status(400).json({ message: `Not enough stock for product: ${product.title || 'Unknown'}` });
+                return res.status(400).json({ message: req.t("order.NotEnoughStock", { title: product.title || "Unknown" }) });
             }
-            // Update product stock
             await productModel_1.Product.findByIdAndUpdate(product._id, {
                 $inc: { stock: -item.quantity },
             });
         }
-        // Clear the cart after placing the order
         await cartModel_1.default.findOneAndDelete({ userId });
-        // Return success response with the new order
-        return res.status(201).json({ message: "Order placed successfully", order: newOrder });
+        return res.status(201).json({ message: req.t("order.PlacedSuccessfully"), order: newOrder });
     }
     catch (error) {
         console.error(error);
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({ message: req.t("auth.ServerError") });
     }
 };
 exports.placeOrderFromCart = placeOrderFromCart;
@@ -78,41 +66,43 @@ const placeDirectOrder = async (req, res) => {
     try {
         const { userId, productId, quantity } = req.body;
         if (!userId || !productId || !quantity || quantity <= 0) {
-            return res.status(400).json({ message: "Invalid input data" });
+            return res.status(400).json({ message: req.t("order.InvalidInput") });
         }
         const user = await userModel_1.User.findById(userId);
         if (!user) {
-            return res.status(404).json({ message: "User not found" });
+            return res.status(404).json({ message: req.t("user.NotFound") });
         }
         const product = await productModel_1.Product.findById(productId);
         if (!product) {
-            return res.status(404).json({ message: "Product not found" });
+            return res.status(404).json({ message: req.t("product.notFound") });
         }
         if (product.stock === 0) {
-            return res.status(400).json({ message: "Product is out of stock" });
+            return res.status(400).json({ message: req.t("order.OutOfStock") });
         }
         if (product.stock < quantity) {
-            return res.status(400).json({ message: `Not enough stock for product: ${product.title}` });
+            return res.status(400).json({
+                message: req.t("order.NotEnoughStock", { product: product.title }),
+            });
         }
         const totalPrice = product.salePrice * quantity;
         const newOrder = new orderModel_1.default({
             userId: new mongoose_1.default.Types.ObjectId(userId),
-            products: [
-                { productId: new mongoose_1.default.Types.ObjectId(productId), quantity }
-            ],
+            products: [{ productId: new mongoose_1.default.Types.ObjectId(productId), quantity }],
             totalPrice,
             status: "Pending",
         });
         await newOrder.save();
-        // Deduct stock
         await productModel_1.Product.findByIdAndUpdate(productId, {
             $inc: { stock: -quantity },
         });
-        return res.status(201).json({ message: "Direct order placed successfully", order: newOrder });
+        return res.status(201).json({
+            message: req.t("order.Success"),
+            order: newOrder,
+        });
     }
     catch (error) {
         console.error("Order Creation Error:", error);
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({ message: req.t("auth.ServerError") });
     }
 };
 exports.placeDirectOrder = placeDirectOrder;
@@ -121,29 +111,28 @@ const getOrdersByUser = async (req, res) => {
         const { userId } = req.params;
         const orders = await orderModel_1.default.find({ userId }).populate("products.productId");
         if (!orders || orders.length === 0) {
-            return res.status(404).json({ message: "No orders found for this user." });
+            return res.status(404).json({ message: req.t("order.NoOrders") });
         }
-        return res.status(200).json({ message: "Orders retrieved successfully", orders });
+        return res.status(200).json({
+            message: req.t("order.OrdersRetrieved"),
+            orders,
+        });
     }
     catch (error) {
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({ message: req.t("auth.ServerError") });
     }
 };
 exports.getOrdersByUser = getOrdersByUser;
 const getOrderRedirectButton = async (req, res) => {
     try {
         const { userId } = req.params;
-        // Validate user ID
         if (!mongoose_1.default.Types.ObjectId.isValid(userId)) {
-            return res.status(400).json({ message: "Invalid user ID" });
+            return res.status(400).json({ message: req.t("order.InvalidUserId") });
         }
-        // Fetch past orders for the user
         const pastOrders = await orderModel_1.default.find({ userId }).sort({ createdAt: -1 });
-        // Check if there are no past orders
         if (pastOrders.length === 0) {
-            return res.status(404).json({ message: "No past orders found" });
+            return res.status(404).json({ message: req.t("order.NoPastOrders") });
         }
-        // Build orders with product details
         const pastOrdersWithProductDetails = await Promise.all(pastOrders.map(async (order) => {
             const productsWithDetails = await Promise.all(order.products.map(async (product) => {
                 const productDetails = await productModel_1.Product.findById(product.productId);
@@ -151,8 +140,8 @@ const getOrderRedirectButton = async (req, res) => {
                     return {
                         productId: product.productId,
                         quantity: product.quantity,
-                        name: "Unknown Product",
-                        description: "No description available",
+                        name: req.t("order.UnknownProduct"),
+                        description: req.t("order.NoDescription"),
                         salePrice: 0,
                         totalPrice: 0,
                         image: "/images/placeholder.jpg",
@@ -166,31 +155,29 @@ const getOrderRedirectButton = async (req, res) => {
                     description: productDetails.description,
                     salePrice: productDetails.salePrice,
                     totalPrice,
-                    image: productDetails.images,
+                    images: productDetails.images || [],
                 };
             }));
-            // Calculate the sum of all products' totalPrice
             const orderTotal = productsWithDetails.reduce((sum, item) => sum + item.totalPrice, 0);
             return {
                 orderId: order._id,
                 createdAt: order.createdAt,
                 totalPrice: order.totalPrice,
-                orderTotal, // Add this line
+                orderTotal,
                 status: order.status,
                 products: productsWithDetails,
             };
         }));
-        // Redirect to the first order
         const redirectUrl = `/orders/${pastOrdersWithProductDetails[0].orderId}`;
         return res.status(200).json({
-            message: "Past orders found",
+            message: req.t("order.PastOrdersFound"),
             redirectUrl,
             pastOrders: pastOrdersWithProductDetails,
         });
     }
     catch (error) {
         console.error(error);
-        return res.status(500).json({ error: error.message });
+        return res.status(500).json({ message: req.t("auth.ServerError") });
     }
 };
 exports.getOrderRedirectButton = getOrderRedirectButton;
