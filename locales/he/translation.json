@@ -117,5 +117,13 @@
     "ProductNotInWishlist": "המוצר לא נמצא ברשימת המשאלות.",
     "RemovedSuccess": "המוצר הוסר מרשימת המשאלות.",
     "InternalError": "משהו השתבש. נסה שוב מאוחר יותר."
+  },
+    "review": {
+    "unauthorized": "לא מורשה. מזהה המשתמש חסר.",
+    "productNotFound": "המוצר לא נמצא.",
+    "alreadyReviewed": "כבר הגשת ביקורת על מוצר זה.",
+    "reviewSuccess": "הביקורת נוספה והדירוג עודכן.",
+    "noReviews": "לא נמצאו ביקורות למוצר זה.",
+    "errorFetching": "שגיאה באחזור ביקורות."
   }
 }

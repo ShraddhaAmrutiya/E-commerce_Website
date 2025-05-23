@@ -47,6 +47,8 @@ export interface ICategory extends Document {
   name: string;
 }
 
+const DEFAULT_IMAGE = "/uploads/default-product-image.jpg";  
+
 const createProduct = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { category, title, description, price, discountPercentage, stock, brand, rating } = req.body;
@@ -79,6 +81,11 @@ const createProduct = async (req: AuthenticatedRequest, res: Response) => {
     let imageUrls: string[] = [];
     if (req.files && "images" in req.files) {
       imageUrls = (req.files["images"] as Express.Multer.File[]).map((file) => `/uploads/${file.filename}`);
+    }
+
+    // If no images provided, add default image
+    if (imageUrls.length === 0) {
+      imageUrls.push(DEFAULT_IMAGE);
     }
 
     // Create new product
@@ -232,12 +239,16 @@ const deleteProduct = async (req: AuthenticatedRequest, res: Response) => {
       { $pull: { products: { productId: productIdToRemove } } }
     );
 
-    if (product.images && Array.isArray(product.images)) {
-      product.images.forEach((imgPath: string) => {
-        const filePath = path.join(process.cwd(), imgPath.startsWith("uploads/") ? imgPath.slice(8) : imgPath);
-        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-      });
+ if (product.images && Array.isArray(product.images)) {
+  product.images.forEach((imgPath: string) => {
+    const filename = path.basename(imgPath);
+    if (filename !== "default-product-image.jpg") {
+      const filePath = path.join(process.cwd(), imgPath.startsWith("uploads/") ? imgPath.slice(8) : imgPath);
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
     }
+  });
+}
+
 
     await product.deleteOne();
 

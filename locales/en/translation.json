@@ -118,6 +118,14 @@
     "ProductNotInWishlist": "Product not found in the wishlist.",
     "RemovedSuccess": "Product removed from wishlist.",
     "InternalError": "Something went wrong. Please try again later."
+  },
+  "review": {
+    "unauthorized": "Unauthorized. User ID is missing.",
+    "productNotFound": "Product not found.",
+    "alreadyReviewed": "You have already reviewed this product.",
+    "reviewSuccess": "Review added and rating updated.",
+    "noReviews": "No reviews found for this product.",
+    "errorFetching": "Error fetching reviews."
   }
 
 }

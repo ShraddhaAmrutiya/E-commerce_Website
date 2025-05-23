@@ -11,6 +11,7 @@ const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
 const wishlistModel_1 = __importDefault(require("../Models/wishlistModel"));
 const cartModel_1 = __importDefault(require("../Models/cartModel"));
+const DEFAULT_IMAGE = "/uploads/default-product-image.jpg";
 const createProduct = async (req, res) => {
     try {
         const { category, title, description, price, discountPercentage, stock, brand, rating } = req.body;
@@ -35,6 +36,10 @@ const createProduct = async (req, res) => {
         let imageUrls = [];
         if (req.files && "images" in req.files) {
             imageUrls = req.files["images"].map((file) => `/uploads/${file.filename}`);
+        }
+        // If no images provided, add default image
+        if (imageUrls.length === 0) {
+            imageUrls.push(DEFAULT_IMAGE);
         }
         // Create new product
         const newProduct = new productModel_1.Product({
@@ -177,9 +182,12 @@ const deleteProduct = async (req, res) => {
         await wishlistModel_1.default.updateMany({ "products.productId": productIdToRemove }, { $pull: { products: { productId: productIdToRemove } } });
         if (product.images && Array.isArray(product.images)) {
             product.images.forEach((imgPath) => {
-                const filePath = path_1.default.join(process.cwd(), imgPath.startsWith("uploads/") ? imgPath.slice(8) : imgPath);
-                if (fs_1.default.existsSync(filePath))
-                    fs_1.default.unlinkSync(filePath);
+                const filename = path_1.default.basename(imgPath);
+                if (filename !== "default-product-image.jpg") {
+                    const filePath = path_1.default.join(process.cwd(), imgPath.startsWith("uploads/") ? imgPath.slice(8) : imgPath);
+                    if (fs_1.default.existsSync(filePath))
+                        fs_1.default.unlinkSync(filePath);
+                }
             });
         }
         await product.deleteOne();
