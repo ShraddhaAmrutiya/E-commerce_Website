@@ -69,7 +69,7 @@ const createProduct = async (req, res) => {
 exports.createProduct = createProduct;
 const readProduct = async (req, res) => {
     try {
-        const limit = parseInt(req.query.limit) || 10;
+        const limit = parseInt(req.query.limit);
         const products = await productModel_1.Product.find().populate("category", "name").limit(limit).exec();
         if (!products || products.length === 0) {
             return res.status(404).json({ message: req.t("product.notFound") });
