@@ -48,7 +48,8 @@ const uploadPath = path_1.default.join(process.cwd(), "uploads");
 app.use("/uploads", express_1.default.static(uploadPath));
 app.use(express_1.default.json());
 // MongoDB Connection
-mongoose_1.default.connect(process.env.URI)
+// mongoose.connect(process.env.URI as string)
+mongoose_1.default.connect('mongodb://localhost:27017/ecommerce')
     .then(() => console.log("Connected to MongoDB"))
     .catch((error) => console.error(error));
 const swaggerAuth = (0, express_basic_auth_1.default)({
@@ -104,5 +105,5 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: "Something went wrong!" });
 });
 // Start Server
-const PORT = process.env.PORT || 5000;
+const PORT = 3000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));

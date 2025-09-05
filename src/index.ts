@@ -50,7 +50,8 @@ const uploadPath = path.join(process.cwd(), "uploads");
 app.use("/uploads", express.static(uploadPath));
 app.use(express.json());
 // MongoDB Connection
-mongoose.connect(process.env.URI as string)
+// mongoose.connect(process.env.URI as string)
+mongoose.connect('mongodb://localhost:27017/ecommerce')
   .then(() => console.log("Connected to MongoDB"))
   .catch((error) => console.error(error));
 
@@ -126,5 +127,5 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 });
 
 // Start Server
-const PORT = process.env.PORT || 5000;
+const PORT = 3000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));

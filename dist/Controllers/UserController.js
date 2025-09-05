@@ -65,6 +65,7 @@ const registerUser = async (req, res) => {
             }
             return res.status(400).json({ errors: validationErrors });
         }
+        console.log(error);
         return res.status(500).json({ message: req.t("auth.ServerError"), error: error.message });
     }
 };

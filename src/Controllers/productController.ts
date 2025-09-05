@@ -117,7 +117,7 @@ const createProduct = async (req: AuthenticatedRequest, res: Response) => {
 
 const readProduct = async (req: Request, res: Response) => {
   try {
-    const limit = parseInt(req.query.limit as string) || 10;
+    const limit = parseInt(req.query.limit as string) 
 
     const products = await Product.find().populate("category", "name").limit(limit).exec();
 
