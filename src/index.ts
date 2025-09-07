@@ -49,11 +49,10 @@ app.use(i18nextMiddleware.handle(i18n));
 const uploadPath = path.join(process.cwd(), "uploads");
 app.use("/uploads", express.static(uploadPath));
 app.use(express.json());
-// MongoDB Connection
-// mongoose.connect(process.env.URI as string)
-mongoose.connect('mongodb://localhost:27017/ecommerce')
+mongoose.connect(process.env.URI)
   .then(() => console.log("Connected to MongoDB"))
   .catch((error) => console.error(error));
+  console.log("✅ Connected to MongoDB:"); 
 
 const swaggerAuth = basicAuth({
   users: { [process.env.SWAGGER_USER]: process.env.SWAGGER_PASS },

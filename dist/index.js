@@ -47,11 +47,10 @@ app.use(i18next_http_middleware_1.default.handle(i18n_1.default));
 const uploadPath = path_1.default.join(process.cwd(), "uploads");
 app.use("/uploads", express_1.default.static(uploadPath));
 app.use(express_1.default.json());
-// MongoDB Connection
-// mongoose.connect(process.env.URI as string)
-mongoose_1.default.connect('mongodb://localhost:27017/ecommerce')
+mongoose_1.default.connect(process.env.URI)
     .then(() => console.log("Connected to MongoDB"))
     .catch((error) => console.error(error));
+console.log("✅ Connected to MongoDB:");
 const swaggerAuth = (0, express_basic_auth_1.default)({
     users: { [process.env.SWAGGER_USER]: process.env.SWAGGER_PASS },
     challenge: true,
