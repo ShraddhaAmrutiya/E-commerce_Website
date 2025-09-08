@@ -49,6 +49,8 @@ export interface ICategory extends Document {
 
 const DEFAULT_IMAGE = "/uploads/default-product-image.jpg";  
 
+import { uploadToCloudinary } from "../middleware/uploadToCoudinary";
+
 const createProduct = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { category, title, description, price, discountPercentage, stock, brand, rating } = req.body;
@@ -77,18 +79,22 @@ const createProduct = async (req: AuthenticatedRequest, res: Response) => {
       parsedDiscount > 0 ? parsedPrice - (parsedPrice * parsedDiscount) / 100 : parsedPrice
     );
 
-    // Handle images
+    // Handle images - Upload to Cloudinary
     let imageUrls: string[] = [];
     if (req.files && "images" in req.files) {
-      imageUrls = (req.files["images"] as Express.Multer.File[]).map((file) => `/uploads/${file.filename}`);
+      const files = req.files["images"] as Express.Multer.File[];
+
+      for (const file of files) {
+        const result = await uploadToCloudinary(file.buffer, "products");
+        imageUrls.push(result.secure_url);
+      }
     }
 
-    // If no images provided, add default image
+    // If no images provided, add default placeholder
     if (imageUrls.length === 0) {
-      imageUrls.push(DEFAULT_IMAGE);
+      imageUrls.push("https://res.cloudinary.com/demo/image/upload/v1690000000/default-product.jpg"); 
     }
 
-    // Create new product
     const newProduct = new Product({
       category: categoryDoc._id,
       title,
@@ -115,9 +121,75 @@ const createProduct = async (req: AuthenticatedRequest, res: Response) => {
   }
 };
 
+// const createProduct = async (req: AuthenticatedRequest, res: Response) => {
+//   try {
+//     const { category, title, description, price, discountPercentage, stock, brand, rating } = req.body;
+
+//     const parsedPrice = Number(price);
+//     const parsedStock = Number(stock);
+//     const parsedRating = Number(rating);
+//     const parsedDiscount = Number(discountPercentage);
+
+//     if (!category || !title || isNaN(parsedPrice)) {
+//       return res.status(400).json({ message: req.t("product.missingFields") });
+//     }
+
+//     const sellerId = req.user?.id;
+//     if (!sellerId) {
+//       return res.status(400).json({ message: req.t("auth.sellerNotAuthenticated") });
+//     }
+
+//     const categoryDoc = await Category.findOne({ name: category });
+//     if (!categoryDoc) {
+//       return res.status(400).json({ message: req.t("category.CategoryNotfound") });
+//     }
+
+//     // Calculate sale price
+//     const finalSalePrice = Math.floor(
+//       parsedDiscount > 0 ? parsedPrice - (parsedPrice * parsedDiscount) / 100 : parsedPrice
+//     );
+
+//     // Handle images
+//     let imageUrls: string[] = [];
+//     if (req.files && "images" in req.files) {
+//       imageUrls = (req.files["images"] as Express.Multer.File[]).map((file) => `/uploads/${file.filename}`);
+//     }
+
+//     // If no images provided, add default image
+//     if (imageUrls.length === 0) {
+//       imageUrls.push(DEFAULT_IMAGE);
+//     }
+
+//     // Create new product
+//     const newProduct = new Product({
+//       category: categoryDoc._id,
+//       title,
+//       description,
+//       price: parsedPrice,
+//       images: imageUrls,
+//       salePrice: finalSalePrice,
+//       discountPercentage: parsedDiscount,
+//       stock: parsedStock,
+//       brand,
+//       rating: parsedRating,
+//       seller: sellerId,
+//     });
+
+//     await newProduct.save();
+
+//     return res.status(201).json({
+//       message: req.t("product.created"),
+//       product: newProduct,
+//     });
+//   } catch (error) {
+//     console.error(error);
+//     return res.status(500).json({ error: (error as Error).message });
+//   }
+// };
+
 const readProduct = async (req: Request, res: Response) => {
   try {
-    const limit = parseInt(req.query.limit as string)   ;
+    const limit = parseInt(req.query.limit as string) 
 
     const products = await Product.find().populate("category", "name").limit(limit).exec();
 

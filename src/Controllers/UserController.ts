@@ -7,6 +7,8 @@ import Cart from "../Models/cartModel"
 import bcrypt from 'bcryptjs'; 
 import { OAuth2Client } from "google-auth-library";
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID!);
+import dns from "dns";
+dns.setDefaultResultOrder("ipv4first"); // helps avoid IPv6 issues
 
 
 
@@ -16,7 +18,7 @@ const SECRET_KEY = process.env.SECRET_KEY as string;
 const transporter = nodemailer.createTransport({
     host: process.env.EMAIL_HOST,
     port: parseInt(process.env.EMAIL_PORT ),
-    secure: false,
+    secure: true,
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
@@ -105,7 +107,8 @@ const registerUser = async (
         validationErrors[field] = req.t(rawMsg) || rawMsg;
       }
       return res.status(400).json({ errors: validationErrors });
-    }
+    }console.log(error);
+    
 
     return res.status(500).json({ message: req.t("auth.ServerError"), error: error.message });
   }

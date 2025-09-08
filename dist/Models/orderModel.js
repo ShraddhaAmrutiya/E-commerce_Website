@@ -33,7 +33,6 @@ const orderSchema = new mongoose_1.Schema({
         },
     ],
     totalPrice: { type: Number, required: true },
-    status: { type: String, default: "Pending" },
     createdAt: { type: Date, default: Date.now },
 }, { timestamps: true });
 const Order = mongoose_1.default.model("Order", orderSchema);

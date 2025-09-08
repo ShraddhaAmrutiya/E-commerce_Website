@@ -12,12 +12,14 @@ const cartModel_1 = __importDefault(require("../Models/cartModel"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const google_auth_library_1 = require("google-auth-library");
 const client = new google_auth_library_1.OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const dns_1 = __importDefault(require("dns"));
+dns_1.default.setDefaultResultOrder("ipv4first"); // helps avoid IPv6 issues
 dotenv_1.default.config();
 const SECRET_KEY = process.env.SECRET_KEY;
 const transporter = nodemailer_1.default.createTransport({
     host: process.env.EMAIL_HOST,
     port: parseInt(process.env.EMAIL_PORT),
-    secure: false,
+    secure: true,
     auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS,
@@ -65,6 +67,7 @@ const registerUser = async (req, res) => {
             }
             return res.status(400).json({ errors: validationErrors });
         }
+        console.log(error);
         return res.status(500).json({ message: req.t("auth.ServerError"), error: error.message });
     }
 };

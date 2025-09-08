@@ -10,6 +10,8 @@ const swagger_1 = __importDefault(require("./swagger/swagger"));
 const swagger_ui_express_1 = __importDefault(require("swagger-ui-express"));
 const express_basic_auth_1 = __importDefault(require("express-basic-auth"));
 const mongoose_1 = __importDefault(require("mongoose"));
+const node_cron_1 = __importDefault(require("node-cron"));
+const orderModel_1 = __importDefault(require("./Models/orderModel"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const http_1 = __importDefault(require("http"));
 const socket_io_1 = require("socket.io");
@@ -38,19 +40,41 @@ app.use((0, cors_1.default)({
 app.use((0, cookie_parser_1.default)());
 const server = http_1.default.createServer(app);
 const io = new socket_io_1.Server(server, {
-    cors: { origin: "http://localhost:5173",
+    cors: {
+        origin: "http://localhost:5173",
         methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
         credentials: true,
-        allowedHeaders: ["Content-Type", "Authorization", "token", "userId", "userName", "Role"], },
+        allowedHeaders: ["Content-Type", "Authorization", "token", "userId", "userName", "Role"],
+    },
 });
 app.use(i18next_http_middleware_1.default.handle(i18n_1.default));
 const uploadPath = path_1.default.join(process.cwd(), "uploads");
 app.use("/uploads", express_1.default.static(uploadPath));
 app.use(express_1.default.json());
 // MongoDB Connection
-mongoose_1.default.connect(process.env.URI)
-    .then(() => console.log("Connected to MongoDB"))
-    .catch((error) => console.error(error));
+// MongoDB Connection
+mongoose_1.default
+    .connect(process.env.URI)
+    .then(() => {
+    console.log("✅ Connected to MongoDB");
+    // ------------------- Cron Job -------------------
+    node_cron_1.default.schedule("0 0 * * *", async () => {
+        try {
+            const twoDaysAgo = new Date();
+            twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
+            const result = await orderModel_1.default.deleteMany({
+                createdAt: { $lt: twoDaysAgo },
+            });
+            if (result.deletedCount > 0) {
+                console.log(`🗑️ Deleted ${result.deletedCount} orders older than 2 days.`);
+            }
+        }
+        catch (err) {
+            console.error("❌ Error deleting old orders:", err);
+        }
+    });
+})
+    .catch((error) => console.error("❌ MongoDB connection error:", error));
 const swaggerAuth = (0, express_basic_auth_1.default)({
     users: { [process.env.SWAGGER_USER]: process.env.SWAGGER_PASS },
     challenge: true,
@@ -80,23 +104,23 @@ io.on("connection", (socket) => {
         delete users[socket.id];
     });
 });
-app.use('/uploads', (req, res, next) => {
+app.use("/uploads", (req, res, next) => {
     next();
-}, express_1.default.static('uploads'));
+}, express_1.default.static("uploads"));
 app.use(languageMIddleware_1.languageMiddleware);
 app.get("/test-lang", (req, res) => {
     res.json({
         lang: req.language,
-        message: req.t("product.productsInCategory", { category: "पुस्तकें" })
+        message: req.t("product.productsInCategory", { category: "पुस्तकें" }),
     });
 });
-app.use('/users', UserRouter_1.default);
-app.use('/category', CategoryRoutes_1.default);
-app.use('/reviews', ReviewRout_1.default);
-app.use('/products', ProductRout_1.default);
-app.use('/cart', cartRoutes_1.default);
-app.use('/order', orderRoutes_1.default);
-app.use('/chatbot', chatboatRout_1.default);
+app.use("/users", UserRouter_1.default);
+app.use("/category", CategoryRoutes_1.default);
+app.use("/reviews", ReviewRout_1.default);
+app.use("/products", ProductRout_1.default);
+app.use("/cart", cartRoutes_1.default);
+app.use("/order", orderRoutes_1.default);
+app.use("/chatbot", chatboatRout_1.default);
 app.use("/wishlist", WishlistRoutes_1.default);
 // Error Handling Middleware
 app.use((err, req, res, next) => {
@@ -104,5 +128,5 @@ app.use((err, req, res, next) => {
     res.status(500).json({ error: "Something went wrong!" });
 });
 // Start Server
-const PORT = process.env.PORT || 5000;
+const PORT = 3000;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
