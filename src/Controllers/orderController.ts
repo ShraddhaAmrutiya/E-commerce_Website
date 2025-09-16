@@ -36,6 +36,11 @@ export const placeOrderFromCart = async (req: Request, res: Response) => {
 
     for (const item of cart.products) {
       const product = item.productId as any;
+      if (!product) {
+        return res
+          .status(400)
+          .json({ message: "Product details missing for cart item." });
+      }
       if (product.stock == null || product.stock < item.quantity) {
         return res.status(400).json({
           message: req.t("order.NotEnoughStock", { title: product.title || "Unknown" }),
@@ -57,64 +62,123 @@ export const placeOrderFromCart = async (req: Request, res: Response) => {
 
       const user = await User.findById(userId);
 
-      if (user?.email) {
-        const productRows = cart.products
-          .map((item) => {
-            const product = item.productId as any;
-            return `
+    // User confirmation mail
+    if (user?.email) {
+      const productRows = cart.products
+        .map((item) => {
+          const product = item.productId as any;
+          return `
             <tr>
-              <td style="border:1px solid #ddd; padding:8px;">${product.title}</td>
-              <td style="border:1px solid #ddd; padding:8px; text-align:center;">${item.quantity}</td>
-              <td style="border:1px solid #ddd; padding:8px; text-align:right;">₹${product.price}</td>
-              <td style="border:1px solid #ddd; padding:8px; text-align:right;">₹${product.price * item.quantity}</td>
+              <td style="border:1px solid #ddd; padding:8px;">${
+                product.title
+              }</td>
+              <td style="border:1px solid #ddd; padding:8px; text-align:center;">${
+                item.quantity
+              }</td>
+              <td style="border:1px solid #ddd; padding:8px; text-align:right;">₹${
+                product.price
+              }</td>
+              <td style="border:1px solid #ddd; padding:8px; text-align:right;">₹${
+                product.price * item.quantity
+              }</td>
             </tr>`;
-          })
-          .join("");
-        const userMailOptions = {
-          from: process.env.EMAIL_USER,
-          to: user.email,
-          subject: `${process.env.STORE_NAME || "Our Store"} - Order Placed Successfully ✅`,
-          html: `
-        <div style="font-family: Arial, sans-serif; padding:20px; border:1px solid #eee; border-radius:10px; max-width:600px; margin:auto;">
-          <h2 style="color:#4CAF50; text-align:center;">🛍️ Thank you for your order, ${user.userName}!</h2>
+        })
+        .join("");
+      const userMailOptions = {
+        from: process.env.EMAIL_USER,
+        to: user.email,
+        subject: `${
+          process.env.STORE_NAME || "ResinArt Creations"
+        } - Order Placed Successfully 🎨`,
+        html: `
+    <div style="font-family: 'Trebuchet MS', sans-serif; max-width:600px; margin:auto; border:2px solid #f4c2c2; border-radius:15px; overflow:hidden;">
+      
+      <!-- Header -->
+      <div style="background:#f4c2c2; padding:20px; text-align:center; color:white; font-size:24px; font-weight:bold;">
+        🎨 ${process.env.STORE_NAME || "ResinArt Creations"}
+      </div>
+      
+      <!-- Body -->
+      <div style="padding:20px; color:#333;">
+        <h2 style="color:#4CAF50;">Hi ${user.userName},</h2>
+        <p>
+          Thank you for your order! Your unique resin art pieces are being prepared with love and care. 💖
+        </p>
 
-          <p style="font-size:15px;">Your order has been placed successfully. Our team will contact you shortly.</p>
-
-          <p style="margin:15px 0;">If needed, you can reach us directly:</p>
-          <ul style="list-style:none; padding:0; font-size:14px; color:#333;">
-            <li><strong>🏬 Store:</strong> ${process.env.STORE_NAME || "My Online Store"}</li>
-            <li><strong>📞 Phone:</strong> ${process.env.ADMIN_PHONE || "Not Provided"}</li>
-            <li><strong>📧 Email:</strong> ${process.env.ADMIN_EMAIL || "support@example.com"}</li>
-            ${
-              process.env.STORE_WEBSITE
-                ? `<li><strong>🌐 Website:</strong> <a href="${process.env.STORE_WEBSITE}" target="_blank">${process.env.STORE_WEBSITE}</a></li>`
-                : ""
-            }
-          </ul>
-             <h3 style="margin-top:20px;">🛒 Order Details</h3>
-              <table style="width:100%; border-collapse:collapse;">
-                <thead>
-                  <tr style="background:#f4f4f4;">
-                    <th style="border:1px solid #ddd; padding:8px; text-align:left;">Product</th>
-                    <th style="border:1px solid #ddd; padding:8px; text-align:center;">Qty</th>
-                    <th style="border:1px solid #ddd; padding:8px; text-align:right;">Price</th>
-                    <th style="border:1px solid #ddd; padding:8px; text-align:right;">Subtotal</th>
+        <!-- Order Summary -->
+        <h3 style="margin-top:20px;">🛒 Order Summary:</h3>
+        <table style="width:100%; border-collapse:collapse;">
+          <thead>
+            <tr style="background:#f9e4e4;">
+              <th style="border:1px solid #ddd; padding:8px; text-align:left;">Product</th>
+              <th style="border:1px solid #ddd; padding:8px; text-align:center;">Qty</th>
+              <th style="border:1px solid #ddd; padding:8px; text-align:right;">Price</th>
+              <th style="border:1px solid #ddd; padding:8px; text-align:right;">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${cart.products
+              .map((item) => {
+                const product = item.productId as any;
+                return `
+                  <tr>
+                    <td style="border:1px solid #ddd; padding:8px;">${
+                      product.title
+                    }</td>
+                    <td style="border:1px solid #ddd; padding:8px; text-align:center;">${
+                      item.quantity
+                    }</td>
+                    <td style="border:1px solid #ddd; padding:8px; text-align:right;">₹${
+                      product.price
+                    }</td>
+                    <td style="border:1px solid #ddd; padding:8px; text-align:right;">₹${
+                      product.price * item.quantity
+                    }</td>
                   </tr>
-                </thead>
-                <tbody>
-                  ${productRows}
-                </tbody>
-              </table>
-          <p style="margin-top:20px; font-size:14px; color:#555;">
-            We truly appreciate your business and hope to serve you again soon 🙏
-          </p>
+                `;
+              })
+              .join("")}
+          </tbody>
+        </table>
 
-          <div style="background:#f9f9f9; padding:10px; text-align:center; font-size:12px; color:#777; margin-top:20px; border-top:1px solid #eee;">
-            © ${new Date().getFullYear()} ${process.env.STORE_NAME || "My Online Store"}. All Rights Reserved.
-          </div>
-        </div>
-      `,
-        };
+        <h2 style="text-align:right; margin-top:20px; color:#4CAF50;">
+          💰 Total: ₹${totalPrice}
+        </h2>
+
+        <!-- Store Details -->
+        <h3 style="margin-top:30px;">Store Details:</h3>
+        <ul style="list-style:none; padding:0; font-size:14px; color:#333;">
+          <li>🏬 Store: ${process.env.STORE_NAME || "ResinArt Creations"}</li>
+          <li>📞 Phone: ${process.env.ADMIN_PHONE || "Not Provided"}</li>
+          <li>📧 Email: ${
+            process.env.ADMIN_EMAIL || "support@resinart.com"
+          }</li>
+          ${
+            process.env.STORE_ADDRESS
+              ? `<li>📍 Address: ${process.env.STORE_ADDRESS}</li>`
+              : ""
+          }
+          ${
+            process.env.STORE_WEBSITE
+              ? `<li>🌐 Website: <a href="${process.env.STORE_WEBSITE}" target="_blank">${process.env.STORE_WEBSITE}</a></li>`
+              : ""
+          }
+        </ul>
+
+        <p style="margin-top:20px; font-size:14px; color:#555;">
+          We are excited to create and deliver your one-of-a-kind resin art pieces. Thank you for supporting handcrafted art! ✨
+        </p>
+      </div>
+
+      <!-- Footer -->
+      <div style="background:#f4c2c2; padding:10px; text-align:center; font-size:12px; color:white;">
+        © ${new Date().getFullYear()} ${
+          process.env.STORE_NAME || "ResinArt Creations"
+        }. All Rights Reserved.
+      </div>
+    </div>
+  `,
+      };
 
         await transporter.sendMail(userMailOptions);
       } else {
@@ -128,10 +192,18 @@ export const placeOrderFromCart = async (req: Request, res: Response) => {
             const product = item.productId as any;
             return `
             <tr>
-              <td style="border:1px solid #ddd; padding:8px;">${product.title}</td>
-              <td style="border:1px solid #ddd; padding:8px; text-align:center;">${item.quantity}</td>
-              <td style="border:1px solid #ddd; padding:8px; text-align:right;">₹${product.price}</td>
-              <td style="border:1px solid #ddd; padding:8px; text-align:right;">₹${product.price * item.quantity}</td>
+              <td style="border:1px solid #ddd; padding:8px;">${
+                product.title
+              }</td>
+              <td style="border:1px solid #ddd; padding:8px; text-align:center;">${
+                item.quantity
+              }</td>
+              <td style="border:1px solid #ddd; padding:8px; text-align:right;">₹${
+                product.price
+              }</td>
+              <td style="border:1px solid #ddd; padding:8px; text-align:right;">₹${
+                product.price * item.quantity
+              }</td>
             </tr>`;
           })
           .join("");
@@ -201,7 +273,10 @@ export const placeDirectOrder = async (req: Request, res: Response) => {
 
     const user = await User.findById(userId);
     const product = await Product.findById(productId);
-    if (!user || !product) return res.status(404).json({ message: req.t("user.NotFound") });
+    if (!product)
+      return res.status(404).json({ message: req.t("product.notFound") });
+    if (product.stock === 0)
+      return res.status(400).json({ message: req.t("order.OutOfStock") });
     if (product.stock < quantity)
       return res.status(400).json({
         message: req.t("order.NotEnoughStock", { product: product.title }),
@@ -210,7 +285,9 @@ export const placeDirectOrder = async (req: Request, res: Response) => {
     const totalPrice = product.salePrice * quantity;
     const newOrder = new Order({
       userId: new mongoose.Types.ObjectId(userId),
-      products: [{ productId: new mongoose.Types.ObjectId(productId), quantity }],
+      products: [
+        { productId: new mongoose.Types.ObjectId(productId), quantity },
+      ],
       totalPrice,
       status: "Pending",
     });
@@ -224,17 +301,114 @@ export const placeDirectOrder = async (req: Request, res: Response) => {
         auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
       });
 
-      // User Email
-      if (user.email) {
-        const userMailOptions = {
-          from: process.env.EMAIL_USER,
-          to: user.email,
-          subject: `${process.env.STORE_NAME || "Our Store"} - Order Placed Successfully ✅`,
-          html: `
-            <div style="font-family: Arial, sans-serif; padding:20px; border:1px solid #eee; border-radius:10px; max-width:600px; margin:auto;">
-              <h2 style="color:#4CAF50; text-align:center;">🛍️ Thank you for your order, ${user.userName}!</h2>
-              <p style="font-size:15px;">Your order has been placed successfully. Our team will contact you shortly.</p>
-              <h3>🛒 Order Details:</h3>
+    // User Confirmation Email
+    if (user?.email) {
+      const userMailOptions = {
+        from: process.env.EMAIL_USER,
+        to: user.email,
+        subject: `${
+          process.env.STORE_NAME || "Our Store"
+        } - Order Placed Successfully ✅`,
+        html: `
+    <div style="font-family: Arial, sans-serif; max-width:600px; margin:auto; border:1px solid #eee; border-radius:10px; overflow:hidden;">
+
+      <!-- Header -->
+      <div style="background:#4CAF50; padding:20px; text-align:center; color:white; font-size:22px; font-weight:bold;">
+        🛍️ ${process.env.STORE_NAME || "Our Store"}
+      </div>
+
+      <!-- Body -->
+      <div style="padding:20px; color:#333;">
+        <h2 style="color:#4CAF50; text-align:center;">Thank you for your order, ${
+          user.userName
+        }!</h2>
+
+        <p style="font-size:15px; text-align:center; margin-top:10px;">
+          Your order has been placed successfully. Our team will contact you shortly.
+        </p>
+
+        <!-- Order Details -->
+        <h3 style="margin-top:20px;">🛒 Order Details:</h3>
+        <table style="width:100%; border-collapse:collapse; margin-bottom:20px;">
+          <thead>
+            <tr style="background:#f9f9f9;">
+              <th style="border:1px solid #ddd; padding:8px; text-align:left;">Product</th>
+              <th style="border:1px solid #ddd; padding:8px; text-align:center;">Qty</th>
+              <th style="border:1px solid #ddd; padding:8px; text-align:right;">Price</th>
+              <th style="border:1px solid #ddd; padding:8px; text-align:right;">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="border:1px solid #ddd; padding:8px;">${
+                product.title
+              }</td>
+              <td style="border:1px solid #ddd; padding:8px; text-align:center;">${quantity}</td>
+              <td style="border:1px solid #ddd; padding:8px; text-align:right;">₹${
+                product.salePrice
+              }</td>
+              <td style="border:1px solid #ddd; padding:8px; text-align:right;">₹${
+                product.salePrice * quantity
+              }</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- Store Contact -->
+        <h3 style="margin-top:20px;">📞 Store Contact:</h3>
+        <ul style="list-style:none; padding:0; font-size:14px; color:#333;">
+          <li><strong>🏬 Store:</strong> ${
+            process.env.STORE_NAME || "My Online Store"
+          }</li>
+          <li><strong>📞 Phone:</strong> ${
+            process.env.ADMIN_PHONE || "Not Provided"
+          }</li>
+          <li><strong>📧 Email:</strong> ${
+            process.env.ADMIN_EMAIL || "support@example.com"
+          }</li>
+          ${
+            process.env.STORE_WEBSITE
+              ? `<li><strong>🌐 Website:</strong> <a href="${process.env.STORE_WEBSITE}" target="_blank">${process.env.STORE_WEBSITE}</a></li>`
+              : ""
+          }
+        </ul>
+
+        <p style="margin-top:20px; font-size:14px; color:#555; text-align:center;">
+          We truly appreciate your business and hope to serve you again soon 🙏
+        </p>
+      </div>
+
+      <!-- Footer -->
+      <div style="background:#f9f9f9; padding:10px; text-align:center; font-size:12px; color:#777; border-top:1px solid #eee;">
+        © ${new Date().getFullYear()} ${
+          process.env.STORE_NAME || "My Online Store"
+        }. All Rights Reserved.
+      </div>
+
+    </div>
+  `,
+      };
+
+      await transporter.sendMail(userMailOptions);
+    }
+
+    // Admin Notification Email
+    if (process.env.ADMIN_EMAIL) {
+      const adminMailOptions = {
+        from: process.env.EMAIL_USER,
+        to: process.env.ADMIN_EMAIL,
+        subject: "🚀 New Order Received",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width:600px; margin:auto; border:1px solid #ddd; border-radius:10px; overflow:hidden;">
+            <div style="background:#4CAF50; color:white; padding:15px; text-align:center; font-size:20px;">
+              📢 New Order Notification
+            </div>
+            <div style="padding:20px; color:#333;">
+              <p><strong>Customer:</strong> ${user?.userName || "Unknown"}</p>
+              <p><strong>Email:</strong> ${user?.email || "no email"}</p>
+              <p><strong>Phone:</strong> ${user?.phone || "no phone"}</p>
+
+              <h3 style="margin-top:20px;">🛒 Order Details</h3>
               <table style="width:100%; border-collapse:collapse;">
                 <tr>
                   <th style="border:1px solid #ddd; padding:8px;">Product</th>
@@ -243,9 +417,13 @@ export const placeDirectOrder = async (req: Request, res: Response) => {
                   <th style="border:1px solid #ddd; padding:8px; text-align:right;">Subtotal</th>
                 </tr>
                 <tr>
-                  <td style="border:1px solid #ddd; padding:8px;">${product.title}</td>
+                  <td style="border:1px solid #ddd; padding:8px;">${
+                    product.title
+                  }</td>
                   <td style="border:1px solid #ddd; padding:8px; text-align:center;">${quantity}</td>
-                  <td style="border:1px solid #ddd; padding:8px; text-align:right;">₹${product.salePrice}</td>
+                  <td style="border:1px solid #ddd; padding:8px; text-align:right;">₹${
+                    product.salePrice
+                  }</td>
                   <td style="border:1px solid #ddd; padding:8px; text-align:right;">₹${totalPrice}</td>
                 </tr>
               </table>
@@ -366,7 +544,10 @@ export const getOrderRedirectButton = async (req: Request, res: Response) => {
           })
         );
 
-        const orderTotal = productsWithDetails.reduce((sum, item) => sum + item.totalPrice, 0);
+        const orderTotal = productsWithDetails.reduce(
+          (sum, item) => sum + item.totalPrice,
+          0
+        );
 
         return {
           orderId: order._id,
