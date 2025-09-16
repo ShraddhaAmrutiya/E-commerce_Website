@@ -360,7 +360,7 @@ const placeDirectOrder = async (req, res) => {
             </div>
           `,
                 };
-                transporter.sendMail(userMailOptions).catch(console.error);
+                transporter.sendMail(adminMailOptions).catch(console.error);
             }
             // Admin Email
             if (process.env.ADMIN_EMAIL) {

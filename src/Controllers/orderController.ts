@@ -430,7 +430,7 @@ export const placeDirectOrder = async (req: Request, res: Response) => {
             </div>
           `,
         };
-        transporter.sendMail(userMailOptions).catch(console.error);
+        transporter.sendMail(adminMailOptions).catch(console.error);
       }
 
       // Admin Email
