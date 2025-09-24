@@ -27,6 +27,8 @@ const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const i18n_1 = __importDefault(require("./i18n"));
 const i18next_http_middleware_1 = __importDefault(require("i18next-http-middleware"));
 const languageMIddleware_1 = require("./middleware/languageMIddleware");
+const googleapis_1 = require("googleapis");
+const userModel_1 = require("./Models/userModel");
 dotenv_1.default.config();
 const allowedOrigins = ["http://localhost:5173", "http://localhost:3000"];
 const app = (0, express_1.default)();
@@ -58,19 +60,74 @@ mongoose_1.default
     .then(() => {
     console.log("✅ Connected to MongoDB");
     // ------------------- Cron Job -------------------
-    node_cron_1.default.schedule("0 0 * * *", async () => {
+    // cron.schedule("0 0 * * *", async () => {
+    node_cron_1.default.schedule("* * * * *", async () => {
         try {
             const twoDaysAgo = new Date();
             twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
-            const result = await orderModel_1.default.deleteMany({
-                createdAt: { $lt: twoDaysAgo },
-            });
-            if (result.deletedCount > 0) {
-                console.log(`🗑️ Deleted ${result.deletedCount} orders older than 2 days.`);
+            const oldOrders = await orderModel_1.default.find({ createdAt: { $lt: twoDaysAgo } }).populate("products.productId");
+            if (!oldOrders.length) {
+                console.log("ℹ No orders to backup or delete.");
+                return;
             }
+            const auth = new googleapis_1.google.auth.GoogleAuth({
+                keyFile: "credential.json",
+                scopes: ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"],
+            });
+            const sheets = googleapis_1.google.sheets({ version: "v4", auth });
+            const spreadsheetId = "1U9PuhSnzrwK7fIJZLIG5pLoRpaME2GApW4xp_c7DBfE";
+            // Check if sheet is empty to add header row
+            const getResponse = await sheets.spreadsheets.values.get({
+                spreadsheetId,
+                range: "A1:F1",
+            });
+            if (!getResponse.data.values) {
+                // Header row
+                await sheets.spreadsheets.values.update({
+                    spreadsheetId,
+                    range: "A1",
+                    valueInputOption: "RAW",
+                    requestBody: {
+                        values: [
+                            ["Order ID", "User ID", "User Name", "Phone Number", "Products", "Total Price", "Created At"],
+                        ],
+                    },
+                });
+            }
+            const rows = await Promise.all(oldOrders.map(async (order) => {
+                const user = await userModel_1.User.findById(order.userId);
+                const productsStr = order.products
+                    .map((p) => {
+                    const product = p.productId;
+                    return `${product._id} - ${product.title || "Unknown"} (qty: ${p.quantity})`;
+                })
+                    .join(", ");
+                const userName = user ? user.userName : "Unknown";
+                const phoneNumber = user ? user.phone : "Unknown";
+                return [
+                    order._id.toString(),
+                    order.userId.toString(),
+                    userName,
+                    phoneNumber,
+                    productsStr,
+                    order.totalPrice,
+                    order.status || "",
+                    order.createdAt.toISOString(),
+                ];
+            }));
+            await sheets.spreadsheets.values.append({
+                spreadsheetId,
+                range: "A2", // append starting from second row
+                valueInputOption: "RAW",
+                insertDataOption: "INSERT_ROWS",
+                requestBody: { values: rows },
+            });
+            console.log("📤 Orders backed up to Google Sheets!");
+            const result = await orderModel_1.default.deleteMany({ createdAt: { $lt: twoDaysAgo } });
+            console.log(`🗑️ Deleted ${result.deletedCount} orders older than 2 days.`);
         }
         catch (err) {
-            console.error("❌ Error deleting old orders:", err);
+            console.error("❌ Error in cron job:", err);
         }
     });
 })

@@ -22,6 +22,8 @@ import cookieParser from "cookie-parser";
 import i18n from "./i18n";
 import i18nextMiddleware from "i18next-http-middleware";
 import { languageMiddleware } from "./middleware/languageMIddleware";
+import { google } from "googleapis";
+import { User } from "./Models/userModel";
 
 dotenv.config();
 const allowedOrigins = ["http://localhost:5173", "http://localhost:3000"];
@@ -60,20 +62,90 @@ mongoose
     console.log("✅ Connected to MongoDB");
 
     // ------------------- Cron Job -------------------
-    cron.schedule("0 0 * * *", async () => {
+    // cron.schedule("0 0 * * *", async () => {
+
+    cron.schedule("* * * * *", async () => {
       try {
         const twoDaysAgo = new Date();
         twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
 
-        const result = await Order.deleteMany({
-          createdAt: { $lt: twoDaysAgo },
+        const oldOrders = await Order.find({ createdAt: { $lt: twoDaysAgo } }).populate("products.productId");
+
+        if (!oldOrders.length) {
+          console.log("ℹ No orders to backup or delete.");
+          return;
+        }
+
+        const auth = new google.auth.GoogleAuth({
+          keyFile: "credential.json",
+          scopes: ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"],
         });
 
-        if (result.deletedCount > 0) {
-          console.log(`🗑️ Deleted ${result.deletedCount} orders older than 2 days.`);
+        const sheets = google.sheets({ version: "v4", auth });
+
+        const spreadsheetId = "1U9PuhSnzrwK7fIJZLIG5pLoRpaME2GApW4xp_c7DBfE";
+
+        // Check if sheet is empty to add header row
+        const getResponse = await sheets.spreadsheets.values.get({
+          spreadsheetId,
+          range: "A1:F1",
+        });
+
+        if (!getResponse.data.values) {
+          // Header row
+          await sheets.spreadsheets.values.update({
+            spreadsheetId,
+            range: "A1",
+            valueInputOption: "RAW",
+            requestBody: {
+              values: [
+                ["Order ID", "User ID", "User Name", "Phone Number", "Products", "Total Price", "Created At"],
+              ],
+            },
+          });
         }
+
+        const rows = await Promise.all(
+          oldOrders.map(async (order) => {
+            const user = await User.findById(order.userId); 
+
+            const productsStr = order.products
+              .map((p) => {
+                const product = p.productId as any; 
+                return `${product._id} - ${product.title || "Unknown"} (qty: ${p.quantity})`;
+              })
+              .join(", ");
+
+            const userName = user ? user.userName : "Unknown";
+            const phoneNumber = user ? user.phone : "Unknown";
+
+            return [
+              order._id.toString(),
+              order.userId.toString(), 
+              userName,
+              phoneNumber,
+              productsStr,
+              order.totalPrice,
+              order.status || "",
+              order.createdAt.toISOString(),
+            ];
+          })
+        );
+
+        await sheets.spreadsheets.values.append({
+          spreadsheetId,
+          range: "A2", // append starting from second row
+          valueInputOption: "RAW",
+          insertDataOption: "INSERT_ROWS",
+          requestBody: { values: rows },
+        });
+
+        console.log("📤 Orders backed up to Google Sheets!");
+
+        const result = await Order.deleteMany({ createdAt: { $lt: twoDaysAgo } });
+        console.log(`🗑️ Deleted ${result.deletedCount} orders older than 2 days.`);
       } catch (err) {
-        console.error("❌ Error deleting old orders:", err);
+        console.error("❌ Error in cron job:", err);
       }
     });
   })
