@@ -193,7 +193,7 @@ const forgotPassword = async (req: Request, res: Response) => {
     const resetLink = `http://localhost:5173/reset-password/${resetToken}`;
 
   const mailOptions = {
-  from: `"Support Team" <${process.env.EMAIL_USER}>`, 
+  from: `"Support Team" <${process.env.EMAIL_USER}>`, // ✅ interpolate properly
   to: email,
   subject: "Password Reset Request",
   html: `<p>You requested a password reset.</p><p><a href="${resetLink}">Reset your password</a></p>`

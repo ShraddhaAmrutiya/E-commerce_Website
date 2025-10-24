@@ -54,8 +54,6 @@ app.use(i18nextMiddleware.handle(i18n));
 const uploadPath = path.join(process.cwd(), "uploads");
 app.use("/uploads", express.static(uploadPath));
 app.use(express.json());
-// MongoDB Connection
-// MongoDB Connection
 mongoose
   .connect(process.env.URI as string)
   .then(() => {
