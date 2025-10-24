@@ -25,8 +25,6 @@ const transporter = nodemailer_1.default.createTransport({
         pass: process.env.EMAIL_PASS,
     },
 });
-console.log("EMAIL_USER:", process.env.EMAIL_USER);
-console.log("EMAIL_PASS:", process.env.EMAIL_PASS ? "Loaded ✅" : "Missing ❌");
 const registerUser = async (req, res) => {
     const { userName, password, email, Role, firstName, lastName, phone, age, gender, } = req.body;
     if (!userName || !password || !email) {

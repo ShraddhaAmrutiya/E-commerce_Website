@@ -37,7 +37,14 @@ app.use((0, cors_1.default)({
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     credentials: true,
     optionsSuccessStatus: 200,
-    allowedHeaders: ["Content-Type", "Authorization", "token", "userId", "userName", "Role"],
+    allowedHeaders: [
+        "Content-Type",
+        "Authorization",
+        "token",
+        "userId",
+        "userName",
+        "Role",
+    ],
 }));
 app.use((0, cookie_parser_1.default)());
 const server = http_1.default.createServer(app);
@@ -46,7 +53,14 @@ const io = new socket_io_1.Server(server, {
         origin: "http://localhost:5173",
         methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
         credentials: true,
-        allowedHeaders: ["Content-Type", "Authorization", "token", "userId", "userName", "Role"],
+        allowedHeaders: [
+            "Content-Type",
+            "Authorization",
+            "token",
+            "userId",
+            "userName",
+            "Role",
+        ],
     },
 });
 app.use(i18next_http_middleware_1.default.handle(i18n_1.default));
@@ -63,14 +77,19 @@ mongoose_1.default
         try {
             const twoDaysAgo = new Date();
             twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
-            const oldOrders = await orderModel_1.default.find({ createdAt: { $lt: twoDaysAgo } }).populate("products.productId");
+            const oldOrders = await orderModel_1.default.find({
+                createdAt: { $lt: twoDaysAgo },
+            }).populate("products.productId");
             if (!oldOrders.length) {
                 console.log("ℹ No orders to backup or delete.");
                 return;
             }
             const auth = new googleapis_1.google.auth.GoogleAuth({
-                keyFile: "credentials.json",
-                scopes: ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"],
+                credentials: JSON.parse(process.env.GOOGLE_CREDENTIALS),
+                scopes: [
+                    "https://www.googleapis.com/auth/spreadsheets",
+                    "https://www.googleapis.com/auth/drive",
+                ],
             });
             const sheets = googleapis_1.google.sheets({ version: "v4", auth });
             const spreadsheetId = "1VVDL3s_QiKJCuXLxEXSkNrGscw2pScMD4NzcUIlN4bo";
@@ -87,7 +106,15 @@ mongoose_1.default
                     valueInputOption: "RAW",
                     requestBody: {
                         values: [
-                            ["Order ID", "User ID", "User Name", "Phone Number", "Products", "Total Price", "Created At"],
+                            [
+                                "Order ID",
+                                "User ID",
+                                "User Name",
+                                "Phone Number",
+                                "Products",
+                                "Total Price",
+                                "Created At",
+                            ],
                         ],
                     },
                 });
@@ -121,7 +148,9 @@ mongoose_1.default
                 requestBody: { values: rows },
             });
             console.log("📤 Orders backed up to Google Sheets!");
-            const result = await orderModel_1.default.deleteMany({ createdAt: { $lt: twoDaysAgo } });
+            const result = await orderModel_1.default.deleteMany({
+                createdAt: { $lt: twoDaysAgo },
+            });
             console.log(`🗑️ Deleted ${result.deletedCount} orders older than 2 days.`);
         }
         catch (err) {

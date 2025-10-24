@@ -35,7 +35,14 @@ app.use(
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     credentials: true,
     optionsSuccessStatus: 200,
-    allowedHeaders: ["Content-Type", "Authorization", "token", "userId", "userName", "Role"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "token",
+      "userId",
+      "userName",
+      "Role",
+    ],
   })
 );
 app.use(cookieParser());
@@ -46,11 +53,17 @@ const io = new Server(server, {
     origin: "http://localhost:5173",
     methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
     credentials: true,
-    allowedHeaders: ["Content-Type", "Authorization", "token", "userId", "userName", "Role"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "token",
+      "userId",
+      "userName",
+      "Role",
+    ],
   },
 });
 app.use(i18nextMiddleware.handle(i18n));
-
 const uploadPath = path.join(process.cwd(), "uploads");
 app.use("/uploads", express.static(uploadPath));
 app.use(express.json());
@@ -67,21 +80,25 @@ mongoose
         const twoDaysAgo = new Date();
         twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
 
-        const oldOrders = await Order.find({ createdAt: { $lt: twoDaysAgo } }).populate("products.productId");
+        const oldOrders = await Order.find({
+          createdAt: { $lt: twoDaysAgo },
+        }).populate("products.productId");
 
         if (!oldOrders.length) {
           console.log("ℹ No orders to backup or delete.");
           return;
         }
-
         const auth = new google.auth.GoogleAuth({
-          keyFile: "credentials.json",
-          scopes: ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"],
+          credentials: JSON.parse(process.env.GOOGLE_CREDENTIALS),
+          scopes: [
+            "https://www.googleapis.com/auth/spreadsheets",
+            "https://www.googleapis.com/auth/drive",
+          ],
         });
 
         const sheets = google.sheets({ version: "v4", auth });
 
-const spreadsheetId = "1VVDL3s_QiKJCuXLxEXSkNrGscw2pScMD4NzcUIlN4bo";
+        const spreadsheetId = "1VVDL3s_QiKJCuXLxEXSkNrGscw2pScMD4NzcUIlN4bo";
         // Check if sheet is empty to add header row
         const getResponse = await sheets.spreadsheets.values.get({
           spreadsheetId,
@@ -96,7 +113,15 @@ const spreadsheetId = "1VVDL3s_QiKJCuXLxEXSkNrGscw2pScMD4NzcUIlN4bo";
             valueInputOption: "RAW",
             requestBody: {
               values: [
-                ["Order ID", "User ID", "User Name", "Phone Number", "Products", "Total Price", "Created At"],
+                [
+                  "Order ID",
+                  "User ID",
+                  "User Name",
+                  "Phone Number",
+                  "Products",
+                  "Total Price",
+                  "Created At",
+                ],
               ],
             },
           });
@@ -104,12 +129,14 @@ const spreadsheetId = "1VVDL3s_QiKJCuXLxEXSkNrGscw2pScMD4NzcUIlN4bo";
 
         const rows = await Promise.all(
           oldOrders.map(async (order) => {
-            const user = await User.findById(order.userId); 
+            const user = await User.findById(order.userId);
 
             const productsStr = order.products
               .map((p) => {
-                const product = p.productId as any; 
-                return `${product._id} - ${product.title || "Unknown"} (qty: ${p.quantity})`;
+                const product = p.productId as any;
+                return `${product._id} - ${product.title || "Unknown"} (qty: ${
+                  p.quantity
+                })`;
               })
               .join(", ");
 
@@ -118,7 +145,7 @@ const spreadsheetId = "1VVDL3s_QiKJCuXLxEXSkNrGscw2pScMD4NzcUIlN4bo";
 
             return [
               order._id.toString(),
-              order.userId.toString(), 
+              order.userId.toString(),
               userName,
               phoneNumber,
               productsStr,
@@ -139,8 +166,12 @@ const spreadsheetId = "1VVDL3s_QiKJCuXLxEXSkNrGscw2pScMD4NzcUIlN4bo";
 
         console.log("📤 Orders backed up to Google Sheets!");
 
-        const result = await Order.deleteMany({ createdAt: { $lt: twoDaysAgo } });
-        console.log(`🗑️ Deleted ${result.deletedCount} orders older than 2 days.`);
+        const result = await Order.deleteMany({
+          createdAt: { $lt: twoDaysAgo },
+        });
+        console.log(
+          `🗑️ Deleted ${result.deletedCount} orders older than 2 days.`
+        );
       } catch (err) {
         console.error("❌ Error in cron job:", err);
       }
@@ -153,7 +184,12 @@ const swaggerAuth = basicAuth({
   challenge: true,
 });
 
-app.use("/api-docs", swaggerAuth, swaggerUi.serve, swaggerUi.setup(swaggerSpec));
+app.use(
+  "/api-docs",
+  swaggerAuth,
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerSpec)
+);
 
 app.get("/", (req: Request, res: Response) => {
   res.send("Welcome to the E-Commerce API with Live Chat!");
