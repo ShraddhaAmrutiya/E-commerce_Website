@@ -35,11 +35,11 @@ const UserSchema = new mongoose_1.Schema({
         type: String,
         match: [/^(\+?\d{10,15})$/, "validation.invalidPhone"],
     },
-    age: {
-        type: Number,
-        min: [12, "validation.ageMin"],
-        max: [100, "validation.ageMax"],
-    },
+    // age: {
+    //   type: Number,
+    //   min: [12, "validation.ageMin"],
+    //   max: [100, "validation.ageMax"],
+    // },
     gender: { type: String },
     Role: {
         type: String,

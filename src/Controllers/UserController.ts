@@ -17,13 +17,16 @@ const SECRET_KEY = process.env.SECRET_KEY as string;
 
 const transporter = nodemailer.createTransport({
     host: process.env.EMAIL_HOST,
-    port: parseInt(process.env.EMAIL_PORT ),
-    secure: true,
+    port: parseInt(process.env.EMAIL_PORT )||587,
+    secure: false,
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASS,
     },
   });
+  console.log("EMAIL_USER:", process.env.EMAIL_USER);
+console.log("EMAIL_PASS:", process.env.EMAIL_PASS ? "Loaded ✅" : "Missing ❌");
+
 
   interface RegisterRequestBody {
     userName: string;
@@ -189,12 +192,13 @@ const forgotPassword = async (req: Request, res: Response) => {
 
     const resetLink = `http://localhost:5173/reset-password/${resetToken}`;
 
-    const mailOptions = {
-      from: '"Support Team" <process.env.EMAIL_USER>',
-      to: email,
-      subject: "Password Reset Request",
-      html: `<p>You requested a password reset.</p><p><a href="${resetLink}">Reset your password</a></p>`
-    };
+  const mailOptions = {
+  from: `"Support Team" <${process.env.EMAIL_USER}>`, 
+  to: email,
+  subject: "Password Reset Request",
+  html: `<p>You requested a password reset.</p><p><a href="${resetLink}">Reset your password</a></p>`
+};
+
 
     await transporter.sendMail(mailOptions);
 

@@ -77,14 +77,13 @@ mongoose
         }
 
         const auth = new google.auth.GoogleAuth({
-          keyFile: "credential.json",
+          keyFile: "credentials.json",
           scopes: ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"],
         });
 
         const sheets = google.sheets({ version: "v4", auth });
 
-        const spreadsheetId = "1U9PuhSnzrwK7fIJZLIG5pLoRpaME2GApW4xp_c7DBfE";
-
+const spreadsheetId = "1VVDL3s_QiKJCuXLxEXSkNrGscw2pScMD4NzcUIlN4bo";
         // Check if sheet is empty to add header row
         const getResponse = await sheets.spreadsheets.values.get({
           spreadsheetId,

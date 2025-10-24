@@ -85,7 +85,7 @@ export const placeOrderFromCart = async (req: Request, res: Response) => {
         })
         .join("");
       const userMailOptions = {
-        from: process.env.EMAIL_USER,
+        from: `"Aaraksha resin art" <${process.env.EMAIL_USER}>`,
         to: user.email,
         subject: `${
           process.env.STORE_NAME || "ResinArt Creations"
@@ -208,11 +208,11 @@ export const placeOrderFromCart = async (req: Request, res: Response) => {
           })
           .join("");
 
-        const adminMailOptions = {
-          from: process.env.EMAIL_USER,
-          to: process.env.ADMIN_EMAIL,
-          subject: "🚀 New Order Received",
-          html: `
+      const adminMailOptions = {
+        from: `"Aaraksha resin art" <${process.env.EMAIL_USER}>`,
+        to: process.env.ADMIN_EMAIL,
+        subject: "🚀 New Order Received",
+        html: `
           <div style="font-family: Arial, sans-serif; max-width:600px; margin:auto; border:1px solid #ddd; border-radius:10px; overflow:hidden;">
             <div style="background:#4CAF50; color:white; padding:15px; text-align:center; font-size:20px;">
               📢 New Order Notification
@@ -304,7 +304,7 @@ export const placeDirectOrder = async (req: Request, res: Response) => {
     // User Confirmation Email
     if (user?.email) {
       const userMailOptions = {
-        from: process.env.EMAIL_USER,
+        from: `"Aaraksha resin art" <${process.env.EMAIL_USER}>`,
         to: user.email,
         subject: `${
           process.env.STORE_NAME || "Our Store"
@@ -395,7 +395,7 @@ export const placeDirectOrder = async (req: Request, res: Response) => {
     // Admin Notification Email
     if (process.env.ADMIN_EMAIL) {
       const adminMailOptions = {
-        from: process.env.EMAIL_USER,
+        from: `"Aaraksharesin art" <${process.env.EMAIL_USER}>`,
         to: process.env.ADMIN_EMAIL,
         subject: "🚀 New Order Received",
         html: `

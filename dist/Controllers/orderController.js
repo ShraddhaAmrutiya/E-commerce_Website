@@ -72,7 +72,7 @@ const placeOrderFromCart = async (req, res) => {
                 })
                     .join("");
                 const userMailOptions = {
-                    from: process.env.EMAIL_USER,
+                    from: `"Aaraksha resin art" <${process.env.EMAIL_USER}>`,
                     to: user.email,
                     subject: `${process.env.STORE_NAME || "ResinArt Creations"} - Order Placed Successfully 🎨`,
                     html: `
@@ -168,7 +168,7 @@ const placeOrderFromCart = async (req, res) => {
                 })
                     .join("");
                 const adminMailOptions = {
-                    from: process.env.EMAIL_USER,
+                    from: `"Aaraksha resin art" <${process.env.EMAIL_USER}>`,
                     to: process.env.ADMIN_EMAIL,
                     subject: "🚀 New Order Received",
                     html: `
@@ -260,7 +260,7 @@ const placeDirectOrder = async (req, res) => {
             // User Confirmation Email
             if (user?.email) {
                 const userMailOptions = {
-                    from: process.env.EMAIL_USER,
+                    from: `"Aaraksha resin art" <${process.env.EMAIL_USER}>`,
                     to: user.email,
                     subject: `${process.env.STORE_NAME || "Our Store"} - Order Placed Successfully ✅`,
                     html: `
@@ -329,7 +329,7 @@ const placeDirectOrder = async (req, res) => {
             // Admin Notification Email
             if (process.env.ADMIN_EMAIL) {
                 const adminMailOptions = {
-                    from: process.env.EMAIL_USER,
+                    from: `"Aaraksharesin art" <${process.env.EMAIL_USER}>`,
                     to: process.env.ADMIN_EMAIL,
                     subject: "🚀 New Order Received",
                     html: `
