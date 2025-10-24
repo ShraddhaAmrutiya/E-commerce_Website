@@ -26,7 +26,7 @@ import { google } from "googleapis";
 import { User } from "./Models/userModel";
 
 dotenv.config();
-const allowedOrigins = ["http://localhost:5173", "http://localhost:3000"];
+const allowedOrigins = ["http://localhost:5173", "http://localhost:3000","https://spectacular-mousse-8d8a6f.netlify.app"];
 
 const app = express();
 app.use(
