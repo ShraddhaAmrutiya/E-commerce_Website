@@ -526,7 +526,7 @@ export const getOrderRedirectButton = async (req: Request, res: Response) => {
                 description: req.t("order.NoDescription"),
                 salePrice: 0,
                 totalPrice: 0,
-                images: ["/images/placeholder.jpg"],
+                images: "/images/placeholder.jpg",
               };
             }
 
