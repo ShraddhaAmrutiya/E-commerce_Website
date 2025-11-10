@@ -526,18 +526,19 @@ export const getOrderRedirectButton = async (req: Request, res: Response) => {
                 description: req.t("order.NoDescription"),
                 salePrice: 0,
                 totalPrice: 0,
-                image: "/images/placeholder.jpg",
+                images: ["/images/placeholder.jpg"],
               };
             }
 
-            const totalPrice = productDetails.salePrice * product.quantity;
+            const salePrice = productDetails.salePrice ?? productDetails.price; 
+            const totalPrice = salePrice * product.quantity;
 
             return {
               productId: product.productId,
               quantity: product.quantity,
               name: productDetails.title,
               description: productDetails.description,
-              salePrice: productDetails.salePrice,
+              salePrice,
               totalPrice,
               images: productDetails.images || [],
             };
@@ -552,8 +553,7 @@ export const getOrderRedirectButton = async (req: Request, res: Response) => {
         return {
           orderId: order._id,
           createdAt: order.createdAt,
-          totalPrice: order.totalPrice,
-          orderTotal,
+          totalPrice: orderTotal, 
           products: productsWithDetails,
         };
       })
