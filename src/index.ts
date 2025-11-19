@@ -73,9 +73,9 @@ mongoose
     console.log("✅ Connected to MongoDB");
 
     // ------------------- Cron Job -------------------
-    // cron.schedule("0 0 * * *", async () => {
+    cron.schedule("0 0 * * *", async () => {
 
-    cron.schedule("* * * * *", async () => {
+    // cron.schedule("* * * * *", async () => {
       try {
         const twoDaysAgo = new Date();
         twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
