@@ -24,6 +24,7 @@ import i18nextMiddleware from "i18next-http-middleware";
 import { languageMiddleware } from "./middleware/languageMIddleware";
 import { google } from "googleapis";
 import { User } from "./Models/userModel";
+import fetch from "node-fetch";
 
 dotenv.config();
 const allowedOrigins = ["http://localhost:5173", "http://localhost:3000","https://aaraksha-resin-art.netlify.app"];
@@ -191,9 +192,10 @@ app.use(
   swaggerUi.setup(swaggerSpec)
 );
 
-app.get("/", (req: Request, res: Response) => {
-  res.send("Welcome to the E-Commerce API with Live Chat!");
+app.get("/status", (req, res) => {
+  res.send("Server is alive!");
 });
+
 
 app.use(express.static(path.join(__dirname, "../public")));
 
@@ -259,3 +261,11 @@ app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
 // Start Server
 const PORT = process.env.PORT;
 server.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+const SELF_URL = "https://e-commerce-website-sfiy.onrender.com";
+
+setInterval(() => {
+  fetch(SELF_URL)
+    .then(() => console.log("Pinged self to keep server awake"))
+    .catch(err => console.log("Self-ping error:", err));
+}, 5 * 60 * 1000);
