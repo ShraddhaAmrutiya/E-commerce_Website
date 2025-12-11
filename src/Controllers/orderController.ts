@@ -35,10 +35,7 @@ export const placeOrderFromCart = async (req: Request, res: Response) => {
         title: product.title,
         price: product.price,
         quantity: item.quantity,
-        customization:
-          req.body[`products[${index}][customization]`] ||
-          req.body.products?.[index]?.customization ||
-          "",
+        customization: req.body[`products[${index}][customization]`] || req.body.products?.[index]?.customization || "",
         image: uploadedImages[index] || null,
       };
     });
@@ -87,10 +84,23 @@ export const placeOrderFromCart = async (req: Request, res: Response) => {
           const cid = `image_${index}`;
           return `
             <tr>
-              <td style="border:1px solid #e5dccb; padding:10px; color:#3b3b3b;">${item.title}</td>
-              <td style="border:1px solid #e5dccb; padding:10px; text-align:center; color:#3b3b3b;">${item.quantity}</td>
+            <td style="border:1px solid #e5dccb; padding:10px; color:#3b3b3b;">
+                  
+                  <!-- ⭐ Product Name as Clickable Link -->
+                  <a 
+                    href="${process.env.STORE_WEBSITE}/products/${item.productId}"
+                    target="_blank"
+                    style="color:#1a73e8; text-decoration:none; font-weight:600;"
+                  >
+                    ${item.title}
+                  </a>
+
+                </td>             
+                 <td style="border:1px solid #e5dccb; padding:10px; text-align:center; color:#3b3b3b;">${item.quantity}</td>
               <td style="border:1px solid #e5dccb; padding:10px; text-align:right; color:#b08968;">₹${item.price}</td>
-              <td style="border:1px solid #e5dccb; padding:10px; text-align:right; color:#b08968;">₹${item.price * item.quantity}</td>
+              <td style="border:1px solid #e5dccb; padding:10px; text-align:right; color:#b08968;">₹${
+                item.price * item.quantity
+              }</td>
               <td style="border:1px solid #e5dccb; padding:10px; color:#6d6d6d;">${item.customization || "-"}</td>
               <td style="border:1px solid #e5dccb; padding:10px; text-align:center;">
                 ${
@@ -236,7 +246,6 @@ export const placeOrderFromCart = async (req: Request, res: Response) => {
   }
 };
 
-
 export const placeDirectOrder = async (req: Request, res: Response) => {
   try {
     const { userId, productId, quantity, customization } = req.body;
@@ -293,12 +302,16 @@ export const placeDirectOrder = async (req: Request, res: Response) => {
           </div>
 
           <!-- User Info (Admin Only) -->
-          ${includeUserInfo ? `
+          ${
+            includeUserInfo
+              ? `
           <div style="padding:25px; color:#4a3d2c; font-size:15px;">
             <p><strong>Customer:</strong> ${user.userName}</p>
             <p><strong>Email:</strong> ${user.email}</p>
             <p><strong>Phone:</strong> ${user.phone || "-"}</p>
-          </div>` : ""}
+          </div>`
+              : ""
+          }
 
           <!-- Order Table -->
           <div style="padding:25px;">
@@ -313,7 +326,15 @@ export const placeDirectOrder = async (req: Request, res: Response) => {
               </thead>
               <tbody>
                 <tr>
-                  <td style="border:1px solid #e6d7c2; padding:10px;">${product.title}</td>
+                  <td style="border:1px solid #e6d7c2; padding:10px;">
+                    <a 
+                      href="${process.env.STORE_WEBSITE}/products/${product._id}"
+                      target="_blank"
+                      style="color:#1a73e8; text-decoration:none; font-weight:600;"
+                    >
+                      ${product.title}
+                    </a>
+                  </td>
                   <td style="border:1px solid #e6d7c2; padding:10px; text-align:center;">${qty}</td>
                   <td style="border:1px solid #e6d7c2; padding:10px; text-align:right;">₹${product.salePrice}</td>
                   <td style="border:1px solid #e6d7c2; padding:10px; text-align:right;">₹${totalPrice}</td>
@@ -327,21 +348,29 @@ export const placeDirectOrder = async (req: Request, res: Response) => {
           </div>
 
           <!-- Customization -->
-          ${customization ? `
+          ${
+            customization
+              ? `
           <div style="padding:20px; color:#4a3d2c;">
             <strong>Customization:</strong> ${customization}
-          </div>` : ""}
+          </div>`
+              : ""
+          }
 
           <!-- Uploaded Image -->
-          ${file ? `
+          ${
+            file
+              ? `
           <div style="padding:20px;">
             <p style="color:#6b522c;">Uploaded Image:</p>
             <img src="cid:customImage" style="max-width:150px; border-radius:12px; border:1px solid #d8c4a7;" />
-          </div>` : ""}
+          </div>`
+              : ""
+          }
 
           <!-- Footer -->
           <div style="background:#faf4eb; padding:25px; text-align:center; border-top:1px solid #e6d7c2; color:#7a6646; font-size:14px;">
-            <p style="margin:0;">🏪 ${process.env.STORE_NAME || 'Aaraksha Resin Art'}</p>
+            <p style="margin:0;">🏪 ${process.env.STORE_NAME || "Aaraksha Resin Art"}</p>
             <p style="margin:4px 0;">📧 ${process.env.ADMIN_EMAIL}</p>
             <p style="margin-top:10px; font-style:italic;">Thank you for choosing handmade elegance ✨</p>
           </div>
@@ -388,14 +417,11 @@ export const placeDirectOrder = async (req: Request, res: Response) => {
     }
 
     return res.status(201).json({ message: "Order placed successfully", order: newOrder });
-
   } catch (err) {
     console.error("Order Direct Error:", err);
     return res.status(500).json({ message: "Server error" });
   }
 };
-
-
 
 export const getOrdersByUser = async (req: Request, res: Response) => {
   try {
