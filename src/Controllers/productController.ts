@@ -6,7 +6,6 @@ import path from "path";
 import fs from "fs";
 import { User } from "../Models/userModel";
 import Wishlist from "../Models/wishlistModel";
-import Cart from "../Models/cartModel";
 
 export interface ProductRequestBody {
   category: string;
@@ -47,7 +46,7 @@ export interface ICategory extends Document {
   name: string;
 }
 
-const DEFAULT_IMAGE = "/uploads/default-product-image.jpg";  
+const DEFAULT_IMAGE = "/uploads/default-product-image.jpg";
 
 import { uploadToCloudinary } from "../middleware/uploadToCoudinary";
 
@@ -64,7 +63,7 @@ const createProduct = async (req: AuthenticatedRequest, res: Response) => {
       return res.status(400).json({ message: req.t("product.missingFields") });
     }
 
-    const sellerId = req.user?.id;
+    const sellerId = (req as any).user?.id;
     if (!sellerId) {
       return res.status(400).json({ message: req.t("auth.sellerNotAuthenticated") });
     }
@@ -92,7 +91,7 @@ const createProduct = async (req: AuthenticatedRequest, res: Response) => {
 
     // If no images provided, add default placeholder
     if (imageUrls.length === 0) {
-      imageUrls.push("https://res.cloudinary.com/demo/image/upload/v1690000000/default-product.jpg"); 
+      imageUrls.push("https://res.cloudinary.com/demo/image/upload/v1690000000/default-product.jpg");
     }
 
     const newProduct = new Product({
@@ -134,7 +133,7 @@ const createProduct = async (req: AuthenticatedRequest, res: Response) => {
 //       return res.status(400).json({ message: req.t("product.missingFields") });
 //     }
 
-//     const sellerId = req.user?.id;
+//     const sellerId = (req as any).user?.id;
 //     if (!sellerId) {
 //       return res.status(400).json({ message: req.t("auth.sellerNotAuthenticated") });
 //     }
@@ -189,7 +188,7 @@ const createProduct = async (req: AuthenticatedRequest, res: Response) => {
 
 const readProduct = async (req: Request, res: Response) => {
   try {
-    const limit = parseInt(req.query.limit as string) 
+    const limit = parseInt(req.query.limit as string)
 
     const products = await Product.find().populate("category", "name").limit(limit).exec();
 
@@ -244,8 +243,8 @@ const updateProduct = async (req: AuthenticatedRequest, res: Response) => {
 
     if (!product) return res.status(404).json({ message: req.t("product.notFound") });
 
-    const userId = req.user?.id;
-    const userRole = req.user?.Role;
+    const userId = (req as any).user?.id;
+    const userRole = (req as any).user?.Role;
 
     if (product.seller.toString() !== userId && userRole !== "admin") {
       return res.status(403).json({ message: req.t("product.unauthorizedRole") });
@@ -299,11 +298,10 @@ const deleteProduct = async (req: AuthenticatedRequest, res: Response) => {
     const product = await Product.findById(_id);
     if (!product) return res.status(404).json({ message: req.t("product.notFound") });
 
-    if (product.seller.toString() !== req.user.id && req.user.Role !== "admin") {
+    if (product.seller.toString() !== (req as any).user.id && (req as any).user.Role !== "admin") {
       return res.status(403).json({ message: req.t("auth.unauthorized") });
     }
 
-    await Cart.updateMany({}, { $pull: { items: { productId: _id } } });
 
     const productIdToRemove = new mongoose.Types.ObjectId(_id);
     await Wishlist.updateMany(
@@ -311,15 +309,15 @@ const deleteProduct = async (req: AuthenticatedRequest, res: Response) => {
       { $pull: { products: { productId: productIdToRemove } } }
     );
 
- if (product.images && Array.isArray(product.images)) {
-  product.images.forEach((imgPath: string) => {
-    const filename = path.basename(imgPath);
-    if (filename !== "default-product-image.jpg") {
-      const filePath = path.join(process.cwd(), imgPath.startsWith("uploads/") ? imgPath.slice(8) : imgPath);
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+    if (product.images && Array.isArray(product.images)) {
+      product.images.forEach((imgPath: string) => {
+        const filename = path.basename(imgPath);
+        if (filename !== "default-product-image.jpg") {
+          const filePath = path.join(process.cwd(), imgPath.startsWith("uploads/") ? imgPath.slice(8) : imgPath);
+          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        }
+      });
     }
-  });
-}
 
 
     await product.deleteOne();
@@ -347,14 +345,14 @@ const getProductsByCategory = async (req: Request<{ id: string }>, res: Response
 const getProductById = async (req: Request<{ _id: string }>, res: Response) => {
   try {
     const { _id } = req.params;
-    const userId = req.user?.id;
+    const userId = (req as any).user?.id;
 
     if (!mongoose.Types.ObjectId.isValid(_id)) {
-      return res.status(400).json({ message:req.t("product.invalidId") });
+      return res.status(400).json({ message: req.t("product.invalidId") });
     }
 
     const product = await Product.findById(_id).populate("category", "name");
-    if (!product) return res.status(404).json({ message:req.t("product.notFound") });
+    if (!product) return res.status(404).json({ message: req.t("product.notFound") });
 
     const wishlistItem = userId ? await Wishlist.findOne({ userId, productId: _id }) : null;
     const isInWishlist = !!wishlistItem;
@@ -401,8 +399,8 @@ export const updateProductImage = async (req: AuthenticatedRequest, res: Respons
   const product = await Product.findById(productId);
   if (!product) return res.status(404).json({ message: req.t("product.notFound") });
 
-  const userId = req.user?.id;
-  const userRole = req.user?.Role;
+  const userId = (req as any).user?.id;
+  const userRole = (req as any).user?.Role;
   if (product.seller.toString() !== userId && userRole !== "admin") {
     return res.status(403).json({ message: req.t("auth.Unauthorized") });
   }
@@ -427,12 +425,12 @@ export const deleteProductImage = async (req: AuthenticatedRequest, res: Respons
   const { productId, index } = req.params;
 
   const product = await Product.findById(productId);
-  if (!product) return res.status(404).json({ message: req.t("product.notFound")});
+  if (!product) return res.status(404).json({ message: req.t("product.notFound") });
 
-  const userId = req.user?.id;
-  const userRole = req.user?.Role;
+  const userId = (req as any).user?.id;
+  const userRole = (req as any).user?.Role;
   if (product.seller.toString() !== userId && userRole !== "admin") {
-    return res.status(403).json({ message: req.t("auth.Unauthorized")  });
+    return res.status(403).json({ message: req.t("auth.Unauthorized") });
   }
 
   const i = parseInt(index);
@@ -462,10 +460,10 @@ export const addProductImages = async (req: AuthenticatedRequest, res: Response)
   const product = await Product.findById(productId);
   if (!product) return res.status(404).json({ message: req.t("product.notFound") });
 
-  const userId = req.user?.id;
-  const userRole = req.user?.Role;
+  const userId = (req as any).user?.id;
+  const userRole = (req as any).user?.Role;
   if (product.seller.toString() !== userId && userRole !== "admin") {
-    return res.status(403).json({ message:req.t("auth.Unauthorized")});
+    return res.status(403).json({ message: req.t("auth.Unauthorized") });
   }
 
   const newImagePaths = files.map((file) => `/uploads/${file.filename}`);

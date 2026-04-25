@@ -6,7 +6,6 @@ import swaggerUi from "swagger-ui-express";
 import basicAuth from "express-basic-auth";
 import mongoose from "mongoose";
 import cron from "node-cron";
-import Order from "./Models/orderModel";
 import dotenv from "dotenv";
 import http from "http";
 import { Server } from "socket.io";
@@ -14,10 +13,9 @@ import UserRoutes from "./Routers/UserRouter";
 import CategoryRoutes from "./Routers/CategoryRoutes";
 import ReviewRoutes from "./Routers/ReviewRout";
 import ProductRoutes from "./Routers/ProductRout";
-import cartRoutes from "./Routers/cartRoutes";
-import orderRoute from "./Routers/orderRoutes";
 import chatbot from "./Routers/chatboatRout";
 import wishlistRoutes from "./Routers/WishlistRoutes";
+import inquiryRoutes from "./Routers/inquiryRoutes";
 import cookieParser from "cookie-parser";
 import i18n from "./i18n";
 import i18nextMiddleware from "i18next-http-middleware";
@@ -26,7 +24,7 @@ import { google } from "googleapis";
 import { User } from "./Models/userModel";
 
 dotenv.config();
-const allowedOrigins = ["http://localhost:5173", "http://localhost:3000","https://aaraksha-resin-art.netlify.app"];
+const allowedOrigins = ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000","https://aaraksha-resin-art.netlify.app"];
 
 const app = express();
 app.use(
@@ -50,7 +48,7 @@ app.use(cookieParser());
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:5173",
+    origin: allowedOrigins,
     methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
     credentials: true,
     allowedHeaders: [
@@ -72,110 +70,7 @@ mongoose
   .then(() => {
     console.log("✅ Connected to MongoDB");
 
-    // ------------------- Cron Job -------------------
-    // cron.schedule("0 0 * * *", async () => {
 
-    cron.schedule("* * * * *", async () => {
-      try {
-        const twoDaysAgo = new Date();
-        twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
-
-        const oldOrders = await Order.find({
-          createdAt: { $lt: twoDaysAgo },
-        }).populate("products.productId");
-
-        if (!oldOrders.length) {
-          console.log("ℹ No orders to backup or delete.");
-          return;
-        }
-        const auth = new google.auth.GoogleAuth({
-          credentials: JSON.parse(process.env.GOOGLE_CREDENTIALS),
-          scopes: [
-            "https://www.googleapis.com/auth/spreadsheets",
-            "https://www.googleapis.com/auth/drive",
-          ],
-        });
-
-        const sheets = google.sheets({ version: "v4", auth });
-
-        const spreadsheetId = "1VVDL3s_QiKJCuXLxEXSkNrGscw2pScMD4NzcUIlN4bo";
-        // Check if sheet is empty to add header row
-        const getResponse = await sheets.spreadsheets.values.get({
-          spreadsheetId,
-          range: "A1:F1",
-        });
-
-        if (!getResponse.data.values) {
-          // Header row
-          await sheets.spreadsheets.values.update({
-            spreadsheetId,
-            range: "A1",
-            valueInputOption: "RAW",
-            requestBody: {
-              values: [
-                [
-                  "Order ID",
-                  "User ID",
-                  "User Name",
-                  "Phone Number",
-                  "Products",
-                  "Total Price",
-                  "Created At",
-                ],
-              ],
-            },
-          });
-        }
-
-        const rows = await Promise.all(
-          oldOrders.map(async (order) => {
-            const user = await User.findById(order.userId);
-
-            const productsStr = order.products
-              .map((p) => {
-                const product = p.productId as any;
-                return `${product._id} - ${product.title || "Unknown"} (qty: ${
-                  p.quantity
-                })`;
-              })
-              .join(", ");
-
-            const userName = user ? user.userName : "Unknown";
-            const phoneNumber = user ? user.phone : "Unknown";
-
-            return [
-              order._id.toString(),
-              order.userId.toString(),
-              userName,
-              phoneNumber,
-              productsStr,
-              order.totalPrice,
-              order.status || "",
-              order.createdAt.toISOString(),
-            ];
-          })
-        );
-
-        await sheets.spreadsheets.values.append({
-          spreadsheetId,
-          range: "A2", // append starting from second row
-          valueInputOption: "RAW",
-          insertDataOption: "INSERT_ROWS",
-          requestBody: { values: rows },
-        });
-
-        console.log("📤 Orders backed up to Google Sheets!");
-
-        const result = await Order.deleteMany({
-          createdAt: { $lt: twoDaysAgo },
-        });
-        console.log(
-          `🗑️ Deleted ${result.deletedCount} orders older than 2 days.`
-        );
-      } catch (err) {
-        console.error("❌ Error in cron job:", err);
-      }
-    });
   })
   .catch((error) => console.error("❌ MongoDB connection error:", error));
 
@@ -245,10 +140,9 @@ app.use("/users", UserRoutes);
 app.use("/category", CategoryRoutes);
 app.use("/reviews", ReviewRoutes);
 app.use("/products", ProductRoutes);
-app.use("/cart", cartRoutes);
-app.use("/order", orderRoute);
 app.use("/chatbot", chatbot);
 app.use("/wishlist", wishlistRoutes);
+app.use("/inquiry", inquiryRoutes);
 
 // Error Handling Middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {

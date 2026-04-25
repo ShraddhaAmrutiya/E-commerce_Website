@@ -10,7 +10,6 @@ const mongoose_1 = __importDefault(require("mongoose"));
 const path_1 = __importDefault(require("path"));
 const fs_1 = __importDefault(require("fs"));
 const wishlistModel_1 = __importDefault(require("../Models/wishlistModel"));
-const cartModel_1 = __importDefault(require("../Models/cartModel"));
 const DEFAULT_IMAGE = "/uploads/default-product-image.jpg";
 const uploadToCoudinary_1 = require("../middleware/uploadToCoudinary");
 const createProduct = async (req, res) => {
@@ -81,7 +80,7 @@ exports.createProduct = createProduct;
 //     if (!category || !title || isNaN(parsedPrice)) {
 //       return res.status(400).json({ message: req.t("product.missingFields") });
 //     }
-//     const sellerId = req.user?.id;
+//     const sellerId = (req as any).user?.id;
 //     if (!sellerId) {
 //       return res.status(400).json({ message: req.t("auth.sellerNotAuthenticated") });
 //     }
@@ -236,7 +235,6 @@ const deleteProduct = async (req, res) => {
         if (product.seller.toString() !== req.user.id && req.user.Role !== "admin") {
             return res.status(403).json({ message: req.t("auth.unauthorized") });
         }
-        await cartModel_1.default.updateMany({}, { $pull: { items: { productId: _id } } });
         const productIdToRemove = new mongoose_1.default.Types.ObjectId(_id);
         await wishlistModel_1.default.updateMany({ "products.productId": productIdToRemove }, { $pull: { products: { productId: productIdToRemove } } });
         if (product.images && Array.isArray(product.images)) {

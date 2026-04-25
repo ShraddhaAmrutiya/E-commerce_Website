@@ -6,7 +6,7 @@ export const addReview = async (req: Request, res: Response) => {
   try {
     const { rating, comment } = req.body;
     const { id: productId } = req.params;
-    const userId = req.user?.id;
+    const userId = (req as any).user?.id;
 
     if (!userId) {
       return res.status(401).json({ message: req.t("review.unauthorized") });

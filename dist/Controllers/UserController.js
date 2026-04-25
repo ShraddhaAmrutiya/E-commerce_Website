@@ -8,7 +8,6 @@ const userModel_1 = require("../Models/userModel");
 const jsonwebtoken_1 = __importDefault(require("jsonwebtoken"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const nodemailer_1 = __importDefault(require("nodemailer"));
-const cartModel_1 = __importDefault(require("../Models/cartModel"));
 const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const google_auth_library_1 = require("google-auth-library");
 const client = new google_auth_library_1.OAuth2Client(process.env.GOOGLE_CLIENT_ID);
@@ -47,7 +46,6 @@ const registerUser = async (req, res) => {
             gender,
         });
         await newUser.save();
-        await new cartModel_1.default({ userId: newUser._id, products: [] }).save();
         const token = jsonwebtoken_1.default.sign({ id: newUser._id, tokenVersion: newUser.tokenVersion }, SECRET_KEY, { expiresIn: "1d" });
         return res.status(201).json({
             success: true,
@@ -253,7 +251,7 @@ const getAllUsers = async (req, res) => {
 exports.getAllUsers = getAllUsers;
 const checkAuthStatus = async (req, res) => {
     try {
-        const user = await userModel_1.User.findById(req.user.id).select("-password");
+        const user = await userModel_1.User.findById(req.user?.id).select("-password");
         if (!user) {
             return res.status(404).json({ message: req.t("auth.UserNotFound") });
         }

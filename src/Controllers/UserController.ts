@@ -1,10 +1,9 @@
-import {User} from "../Models/userModel";
+import { User } from "../Models/userModel";
 import express, { Request, Response } from 'express';
 import jwt from "jsonwebtoken";
 import dotenv from "dotenv";
 import nodemailer from "nodemailer";
-import Cart from "../Models/cartModel"
-import bcrypt from 'bcryptjs'; 
+import bcrypt from 'bcryptjs';
 import { OAuth2Client } from "google-auth-library";
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID!);
 import dns from "dns";
@@ -16,29 +15,29 @@ dotenv.config();
 const SECRET_KEY = process.env.SECRET_KEY as string;
 
 const transporter = nodemailer.createTransport({
-    host: process.env.EMAIL_HOST,
-    port: parseInt(process.env.EMAIL_PORT )||587,
-    secure: false,
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-  });
+  host: process.env.EMAIL_HOST,
+  port: parseInt(process.env.EMAIL_PORT) || 587,
+  secure: false,
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
-  interface RegisterRequestBody {
-    userName: string;
-    firstName?: string;
-    lastName?: string;
-    email: string;
-    phone?: string;
-    age?: number;
-    gender?: string;
-    Role: string;
-    password: string;
-  }
-  
+interface RegisterRequestBody {
+  userName: string;
+  firstName?: string;
+  lastName?: string;
+  email: string;
+  phone?: string;
+  age?: number;
+  gender?: string;
+  Role: string;
+  password: string;
+}
+
 export interface LoginRequestBody {
-  userName : string;
+  userName: string;
   password: string;
 }
 
@@ -83,8 +82,6 @@ const registerUser = async (
 
     await newUser.save();
 
-    await new Cart({ userId: newUser._id, products: [] }).save();
-
     const token = jwt.sign(
       { id: newUser._id, tokenVersion: newUser.tokenVersion },
       SECRET_KEY,
@@ -107,8 +104,8 @@ const registerUser = async (
         validationErrors[field] = req.t(rawMsg) || rawMsg;
       }
       return res.status(400).json({ errors: validationErrors });
-    }console.log(error);
-    
+    } console.log(error);
+
 
     return res.status(500).json({ message: req.t("auth.ServerError"), error: error.message });
   }
@@ -189,12 +186,12 @@ const forgotPassword = async (req: Request, res: Response) => {
 
     const resetLink = `http://localhost:5173/reset-password/${resetToken}`;
 
-  const mailOptions = {
-  from: `"Support Team" <${process.env.EMAIL_USER}>`, // ✅ interpolate properly
-  to: email,
-  subject: "Password Reset Request",
-  html: `<p>You requested a password reset.</p><p><a href="${resetLink}">Reset your password</a></p>`
-};
+    const mailOptions = {
+      from: `"Support Team" <${process.env.EMAIL_USER}>`, // ✅ interpolate properly
+      to: email,
+      subject: "Password Reset Request",
+      html: `<p>You requested a password reset.</p><p><a href="${resetLink}">Reset your password</a></p>`
+    };
 
 
     await transporter.sendMail(mailOptions);
@@ -335,7 +332,7 @@ const getAllUsers = async (req: Request, res: Response) => {
 
 const checkAuthStatus = async (req: Request, res: Response) => {
   try {
-    const user = await User.findById(req.user.id).select("-password");
+    const user = await User.findById((req as any).user?.id).select("-password");
     if (!user) {
       return res.status(404).json({ message: req.t("auth.UserNotFound") });
     }

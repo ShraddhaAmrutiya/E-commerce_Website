@@ -10,8 +10,6 @@ const swagger_1 = __importDefault(require("./swagger/swagger"));
 const swagger_ui_express_1 = __importDefault(require("swagger-ui-express"));
 const express_basic_auth_1 = __importDefault(require("express-basic-auth"));
 const mongoose_1 = __importDefault(require("mongoose"));
-const node_cron_1 = __importDefault(require("node-cron"));
-const orderModel_1 = __importDefault(require("./Models/orderModel"));
 const dotenv_1 = __importDefault(require("dotenv"));
 const http_1 = __importDefault(require("http"));
 const socket_io_1 = require("socket.io");
@@ -19,18 +17,15 @@ const UserRouter_1 = __importDefault(require("./Routers/UserRouter"));
 const CategoryRoutes_1 = __importDefault(require("./Routers/CategoryRoutes"));
 const ReviewRout_1 = __importDefault(require("./Routers/ReviewRout"));
 const ProductRout_1 = __importDefault(require("./Routers/ProductRout"));
-const cartRoutes_1 = __importDefault(require("./Routers/cartRoutes"));
-const orderRoutes_1 = __importDefault(require("./Routers/orderRoutes"));
 const chatboatRout_1 = __importDefault(require("./Routers/chatboatRout"));
 const WishlistRoutes_1 = __importDefault(require("./Routers/WishlistRoutes"));
+const inquiryRoutes_1 = __importDefault(require("./Routers/inquiryRoutes"));
 const cookie_parser_1 = __importDefault(require("cookie-parser"));
 const i18n_1 = __importDefault(require("./i18n"));
 const i18next_http_middleware_1 = __importDefault(require("i18next-http-middleware"));
 const languageMIddleware_1 = require("./middleware/languageMIddleware");
-const googleapis_1 = require("googleapis");
-const userModel_1 = require("./Models/userModel");
 dotenv_1.default.config();
-const allowedOrigins = ["http://localhost:5173", "http://localhost:3000"];
+const allowedOrigins = ["http://localhost:5173", "http://localhost:5174", "http://localhost:3000", "https://aaraksha-resin-art.netlify.app"];
 const app = (0, express_1.default)();
 app.use((0, cors_1.default)({
     origin: allowedOrigins,
@@ -50,7 +45,7 @@ app.use((0, cookie_parser_1.default)());
 const server = http_1.default.createServer(app);
 const io = new socket_io_1.Server(server, {
     cors: {
-        origin: "http://localhost:5173",
+        origin: allowedOrigins,
         methods: ["GET", "HEAD", "PUT", "PATCH", "POST", "DELETE"],
         credentials: true,
         allowedHeaders: [
@@ -71,92 +66,6 @@ mongoose_1.default
     .connect(process.env.URI)
     .then(() => {
     console.log("✅ Connected to MongoDB");
-    // ------------------- Cron Job -------------------
-    // cron.schedule("0 0 * * *", async () => {
-    node_cron_1.default.schedule("* * * * *", async () => {
-        try {
-            const twoDaysAgo = new Date();
-            twoDaysAgo.setDate(twoDaysAgo.getDate() - 2);
-            const oldOrders = await orderModel_1.default.find({
-                createdAt: { $lt: twoDaysAgo },
-            }).populate("products.productId");
-            if (!oldOrders.length) {
-                console.log("ℹ No orders to backup or delete.");
-                return;
-            }
-            const auth = new googleapis_1.google.auth.GoogleAuth({
-                credentials: JSON.parse(process.env.GOOGLE_CREDENTIALS),
-                scopes: [
-                    "https://www.googleapis.com/auth/spreadsheets",
-                    "https://www.googleapis.com/auth/drive",
-                ],
-            });
-            const sheets = googleapis_1.google.sheets({ version: "v4", auth });
-            const spreadsheetId = "1VVDL3s_QiKJCuXLxEXSkNrGscw2pScMD4NzcUIlN4bo";
-            // Check if sheet is empty to add header row
-            const getResponse = await sheets.spreadsheets.values.get({
-                spreadsheetId,
-                range: "A1:F1",
-            });
-            if (!getResponse.data.values) {
-                // Header row
-                await sheets.spreadsheets.values.update({
-                    spreadsheetId,
-                    range: "A1",
-                    valueInputOption: "RAW",
-                    requestBody: {
-                        values: [
-                            [
-                                "Order ID",
-                                "User ID",
-                                "User Name",
-                                "Phone Number",
-                                "Products",
-                                "Total Price",
-                                "Created At",
-                            ],
-                        ],
-                    },
-                });
-            }
-            const rows = await Promise.all(oldOrders.map(async (order) => {
-                const user = await userModel_1.User.findById(order.userId);
-                const productsStr = order.products
-                    .map((p) => {
-                    const product = p.productId;
-                    return `${product._id} - ${product.title || "Unknown"} (qty: ${p.quantity})`;
-                })
-                    .join(", ");
-                const userName = user ? user.userName : "Unknown";
-                const phoneNumber = user ? user.phone : "Unknown";
-                return [
-                    order._id.toString(),
-                    order.userId.toString(),
-                    userName,
-                    phoneNumber,
-                    productsStr,
-                    order.totalPrice,
-                    order.status || "",
-                    order.createdAt.toISOString(),
-                ];
-            }));
-            await sheets.spreadsheets.values.append({
-                spreadsheetId,
-                range: "A2", // append starting from second row
-                valueInputOption: "RAW",
-                insertDataOption: "INSERT_ROWS",
-                requestBody: { values: rows },
-            });
-            console.log("📤 Orders backed up to Google Sheets!");
-            const result = await orderModel_1.default.deleteMany({
-                createdAt: { $lt: twoDaysAgo },
-            });
-            console.log(`🗑️ Deleted ${result.deletedCount} orders older than 2 days.`);
-        }
-        catch (err) {
-            console.error("❌ Error in cron job:", err);
-        }
-    });
 })
     .catch((error) => console.error("❌ MongoDB connection error:", error));
 const swaggerAuth = (0, express_basic_auth_1.default)({
@@ -202,10 +111,9 @@ app.use("/users", UserRouter_1.default);
 app.use("/category", CategoryRoutes_1.default);
 app.use("/reviews", ReviewRout_1.default);
 app.use("/products", ProductRout_1.default);
-app.use("/cart", cartRoutes_1.default);
-app.use("/order", orderRoutes_1.default);
 app.use("/chatbot", chatboatRout_1.default);
 app.use("/wishlist", WishlistRoutes_1.default);
+app.use("/inquiry", inquiryRoutes_1.default);
 // Error Handling Middleware
 app.use((err, req, res, next) => {
     console.error(err);
