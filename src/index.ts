@@ -25,7 +25,8 @@ import { languageMiddleware } from "./middleware/languageMIddleware";
 import { google } from "googleapis";
 import { User } from "./Models/userModel";
 import fetch from "node-fetch";
-
+import { fetchAndSaveGoogleReviews } from "./Controllers/googlrController";
+import GoogleReviewRoutes from "./Routers/googleReviewRoutes";
 dotenv.config();
 const allowedOrigins = ["http://localhost:5173", "http://localhost:3000","https://aaraksha-resin-art.netlify.app"];
 
@@ -195,6 +196,18 @@ app.use(
 app.get("/status", (req, res) => {
   res.send("Server is alive!");
 });
+cron.schedule("* * * * *", async () => {
+  // cron.schedule("0 0 * * 0", async () => {
+  try {
+    console.log("🔄 Weekly Google review sync started");
+
+    const result = await fetchAndSaveGoogleReviews();
+
+    console.log("✅ Weekly sync:", result);
+  } catch (error) {
+    console.error("❌ Weekly sync failed:", error);
+  }
+});;
 
 
 app.use(express.static(path.join(__dirname, "../public")));
@@ -251,7 +264,7 @@ app.use("/cart", cartRoutes);
 app.use("/order", orderRoute);
 app.use("/chatbot", chatbot);
 app.use("/wishlist", wishlistRoutes);
-
+app.use("/google-reviews", GoogleReviewRoutes);
 // Error Handling Middleware
 app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error(err);
