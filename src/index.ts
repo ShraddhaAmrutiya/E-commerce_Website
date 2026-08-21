@@ -196,8 +196,7 @@ app.use(
 app.get("/status", (req, res) => {
   res.send("Server is alive!");
 });
-cron.schedule("* * * * *", async () => {
-  // cron.schedule("0 0 * * 0", async () => {
+  cron.schedule("0 0 * * 0", async () => {
   try {
     console.log("🔄 Weekly Google review sync started");
 
